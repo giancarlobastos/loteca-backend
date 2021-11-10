@@ -1,0 +1,34 @@
+version: '3.3'
+services:
+  mysql:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_DATABASE: loteca
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+      - loteca-mysql:/var/lib/mysql
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/1.sql
+      - ./scripts/data.sql:/docker-entrypoint-initdb.d/2.sql
+    networks:
+      - loteca-network
+  admin:
+    image: phpmyadmin/phpmyadmin:latest
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: secret
+    links:
+      - mysql
+    ports:
+      - 8081:80
+    networks:
+      - loteca-network
+volumes:
+  loteca-mysql:
+networks:
+  loteca-network:
