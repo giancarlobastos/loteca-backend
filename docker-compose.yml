@@ -28,6 +28,15 @@ services:
       - 8081:80
     networks:
       - loteca-network
+  backend:
+    image: loteca-backend
+    restart: 'no'
+    ports:
+      - '8080:8080'
+    depends_on:
+      - mysql
+    networks:
+      - loteca-network
 volumes:
   loteca-mysql:
 networks:
