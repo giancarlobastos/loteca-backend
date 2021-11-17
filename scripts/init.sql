@@ -35,16 +35,19 @@ CREATE TABLE `country`
 
 CREATE TABLE `tournament`
 (
-    `id`       int PRIMARY KEY AUTO_INCREMENT,
-    `name`     varchar(255),
-    `division` varchar(255),
-    `logo`     varchar(255)
+    `id`                    int PRIMARY KEY AUTO_INCREMENT,
+    `name`                  varchar(255),
+    `code`                  varchar(255),
+    `code_description`      varchar(255),
+    `division`              varchar(255),
+    `logo`                  varchar(255)
 );
 
 CREATE TABLE `season`
 (
     `id`            int PRIMARY KEY AUTO_INCREMENT,
-    `name`          int,
+    `name`          varchar(255),
+    `code`          varchar(255),
     `tournament_id` int
 );
 
@@ -60,6 +63,7 @@ CREATE TABLE `round`
     `id`        int PRIMARY KEY AUTO_INCREMENT,
     `name`      varchar(255),
     `number`    int,
+    `code`      varchar(255),
     `season_id` int
 );
 
