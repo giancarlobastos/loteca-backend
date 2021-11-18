@@ -11,3 +11,4 @@ loteca-backend
 loteca-backend_unix
 target/
 *.iml
+**/.DS_Store
