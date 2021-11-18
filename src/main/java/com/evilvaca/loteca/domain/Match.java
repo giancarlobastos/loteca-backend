@@ -15,6 +15,8 @@ public class Match {
 
     private String round;
 
+    private String group;
+
     private long homeId;
 
     private long awayId;

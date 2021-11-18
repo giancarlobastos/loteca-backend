@@ -24,20 +24,20 @@ public class TransferMarktLeagueScraper {
 
     public static final String HOST_URL = "https://www.transfermarkt.com.br";
 
-    private static final String TOURNAMENT_URL = HOST_URL + "/{tournamentCodeDescription}/spieltag/wettbewerb/{tournamentCode}/saison_id/{seasonCode}/spieltag/{roundCode}";
+    private static final String COMPETITION_URL = HOST_URL + "/{competitionCodeName}/spieltag/wettbewerb/{competitionCode}/saison_id/{seasonCode}/spieltag/{roundCode}";
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("ddMMyyHHmm");
 
     private final RestTemplate restTemplate;
 
     public List<Match> getMatchList(Round round) {
-        return getDocument(TOURNAMENT_URL,
-                round.getSeason().getTournament().getCodeDescription(),
-                round.getSeason().getTournament().getCode(),
+        return getDocument(COMPETITION_URL,
+                round.getSeason().getCompetition().getCodeName(),
+                round.getSeason().getCompetition().getCode(),
                 round.getSeason().getCode(),
                 round.getCode())
-                .select("table tbody tr.table-grosse-schrift").stream()
-                .map(match -> getMatchDetails(match.parents().get(2).select("div.footer a").attr("href")))
+                .select(".liveLink").stream()
+                .map(match -> getMatchDetails(match.attr("href")))
                 .collect(Collectors.toList());
     }
 

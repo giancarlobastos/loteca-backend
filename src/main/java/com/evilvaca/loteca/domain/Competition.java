@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class Tournament {
+public class Competition {
 
     private long id;
 
@@ -13,7 +13,7 @@ public class Tournament {
 
     private String code;
 
-    private String codeDescription;
+    private String codeName;
 
     private String division;
 

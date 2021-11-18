@@ -1,7 +1,7 @@
 package com.evilvaca.loteca.scrapers;
 
 import com.evilvaca.loteca.domain.Match;
-import com.evilvaca.loteca.domain.Round;
+import com.evilvaca.loteca.domain.Season;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -24,20 +24,19 @@ public class TransferMarktCupScraper {
 
     public static final String HOST_URL = "https://www.transfermarkt.com.br";
 
-    private static final String TOURNAMENT_URL = HOST_URL + "/{tournamentCodeDescription}/gesamtspielplan/pokalwettbewerb/{tournamentCode}/saison_id/{seasonCode}";
+    private static final String COMPETITION_URL = HOST_URL + "/{competitionCodeName}/gesamtspielplan/pokalwettbewerb/{competitionCode}/saison_id/{seasonCode}";
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("ddMMyyHHmm");
 
     private final RestTemplate restTemplate;
 
-    public List<Match> getMatchList(Round round) {
-        return getDocument(TOURNAMENT_URL,
-                round.getSeason().getTournament().getCodeDescription(),
-                round.getSeason().getTournament().getCode(),
-                round.getSeason().getCode(),
-                round.getCode())
-                .select("table tbody tr.table-grosse-schrift").stream()
-                .map(match -> getMatchDetails(match.parents().get(2).select("div.footer a").attr("href")))
+    public List<Match> getMatchList(Season season) {
+        return getDocument(COMPETITION_URL,
+                season.getCompetition().getCodeName(),
+                season.getCompetition().getCode(),
+                season.getCode())
+                .select(".ergebnis-link").stream()
+                .map(match -> getMatchDetails(match.attr("href")))
                 .collect(Collectors.toList());
     }
 
@@ -55,6 +54,10 @@ public class TransferMarktCupScraper {
 
         String homeScore = hasScore ? doc.select(".sb-endstand").text().split("[: ]")[0] : null;
         String awayScore = hasScore ? doc.select(".sb-endstand").text().split("[: ]")[1] : null;
+
+        String round = doc.select(".sb-datum").text().split("\\|")[0].trim();
+        boolean isGroupRound = round.contains("Grupo");
+
         LocalDateTime matchDateTime = LocalDateTime.parse(doc.select(".sb-datum").text()
                 .replaceFirst(".+?\\|", "")
                 .replaceAll("[^0-9]", ""), DATE_TIME_FORMATTER);
@@ -62,6 +65,7 @@ public class TransferMarktCupScraper {
 
         return Match.builder()
                 .id(Long.parseLong(matchId))
+                .group(isGroupRound ? round : null)
                 .homeId(Long.parseLong(homeTeam))
                 .awayId(Long.parseLong(awayTeam))
                 .homeScore(hasScore ? Integer.parseInt(homeScore) : null)

@@ -13,5 +13,5 @@ public class Season {
 
     private String code;
 
-    private Tournament tournament;
+    private Competition competition;
 }
