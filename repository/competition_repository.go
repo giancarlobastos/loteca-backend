@@ -29,7 +29,7 @@ func (pr *CompetitionRepository) GetCompetition(id int) (domain.Competition, err
 	return competitions[0], nil
 }
 
-func (pr *CompetitionRepository) getTournaments(query string, args ...interface{}) (competitions []domain.Competition, err error) {
+func (pr *CompetitionRepository) getCompetitions(query string, args ...interface{}) (competitions []domain.Competition, err error) {
 	rows, err := pr.db.Query(query, args...)
 
 	if err != nil {

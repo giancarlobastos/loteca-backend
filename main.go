@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"github.com/giancarlobastos/loteca-backend/crawler"
+
+	"github.com/giancarlobastos/loteca-backend/domain"
+	"github.com/giancarlobastos/loteca-backend/scraper"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -15,8 +17,17 @@ func main() {
 	//tournament, _ := tournamentRepository.GetTournament(154298)
 	//json, _ := json.Marshal(tournament)
 	//fmt.Println(string(json))
-	c := crawler.NewCrawler()
-	c.GetMatch(154298)
+	scraper := scraper.NewTransferMarktLeagueScraper()
+	scraper.GetMatchList(domain.Round{
+		Code: "10",
+		Season: domain.Season{
+			Code: "2020",
+			Competition: domain.Competition{
+				Code:     "BRA1",
+				CodeName: "campeonato-brasileiro-serie-a",
+			},
+		},
+	})
 	defer destroy()
 }
 
@@ -25,7 +36,7 @@ func init() {
 	database, err = sql.Open("mysql", "root:secret@tcp(mysql:3306)/loteca")
 
 	if err != nil {
-		//		panic(err.Error())
+		panic(err.Error())
 	}
 }
 
