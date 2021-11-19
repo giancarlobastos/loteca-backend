@@ -3,8 +3,9 @@ package main
 import (
 	"database/sql"
 
-	"github.com/giancarlobastos/loteca-backend/domain"
-	"github.com/giancarlobastos/loteca-backend/scraper"
+	// "github.com/giancarlobastos/loteca-backend/domain"
+	// "github.com/giancarlobastos/loteca-backend/scraper"
+	"github.com/giancarlobastos/loteca-backend/converter"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -14,14 +15,14 @@ var (
 
 func main() {
 	// scraper := scraper.NewTransferMarktLeagueScraper()
-	scraper := scraper.NewTransferMarktCupScraper()
-	scraper.GetMatchList(domain.Season{
-		Code: "2020",
-		Competition: domain.Competition{
-			Code:     "CL",
-			CodeName: "uefa-champions-league",
-		},
-	})
+	// scraper := scraper.NewTransferMarktCupScraper()
+	// scraper.GetMatchList(domain.Season{
+	// 	Code: "2020",
+	// 	Competition: domain.Competition{
+	// 		Code:     "CL",
+	// 		CodeName: "uefa-champions-league",
+	// 	},
+	// })
 	// scraper.GetMatchList(domain.Round{
 	// 	Code: "30",
 	// 	Season: domain.Season{
@@ -32,22 +33,23 @@ func main() {
 	// 		},
 	// 	},
 	// })
-	defer destroy()
+	// defer destroy()
+	converter.ConvertSvgToPngWithChrome("https://s.glbimg.com/es/sde/f/organizacoes/2020/02/12/botsvg.svg", "./assets/test.png")
 }
 
-func init() {
-	var err error
-	database, err = sql.Open("mysql", "root:secret@tcp(mysql:3306)/loteca")
+// func init() {
+// 	var err error
+// 	database, err = sql.Open("mysql", "root:secret@tcp(mysql:3306)/loteca")
 
-	if err != nil {
-		panic(err.Error())
-	}
-}
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+// }
 
-func destroy() {
-	err := database.Close()
+// func destroy() {
+// 	err := database.Close()
 
-	if err != nil {
-		panic(err.Error())
-	}
-}
+// 	if err != nil {
+// 		panic(err.Error())
+// 	}
+// }
