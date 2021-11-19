@@ -13,17 +13,25 @@ var (
 )
 
 func main() {
-	scraper := scraper.NewTransferMarktLeagueScraper()
-	scraper.GetMatchList(domain.Round{
-		Code: "30",
-		Season: domain.Season{
-			Code: "2020",
-			Competition: domain.Competition{
-				Code:     "BRA1",
-				CodeName: "campeonato-brasileiro-serie-a",
-			},
+	// scraper := scraper.NewTransferMarktLeagueScraper()
+	scraper := scraper.NewTransferMarktCupScraper()
+	scraper.GetMatchList(domain.Season{
+		Code: "2020",
+		Competition: domain.Competition{
+			Code:     "CL",
+			CodeName: "uefa-champions-league",
 		},
 	})
+	// scraper.GetMatchList(domain.Round{
+	// 	Code: "30",
+	// 	Season: domain.Season{
+	// 		Code: "2020",
+	// 		Competition: domain.Competition{
+	// 			Code:     "BRA1",
+	// 			CodeName: "campeonato-brasileiro-serie-a",
+	// 		},
+	// 	},
+	// })
 	defer destroy()
 }
 

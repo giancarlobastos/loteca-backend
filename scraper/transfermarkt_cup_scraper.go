@@ -15,24 +15,23 @@ import (
 
 const ()
 
-type TransferMarktLeagueScraper struct {
+type TransferMarktCupScraper struct {
 }
 
-func NewTransferMarktLeagueScraper() *TransferMarktLeagueScraper {
-	return &TransferMarktLeagueScraper{}
+func NewTransferMarktCupScraper() *TransferMarktCupScraper {
+	return &TransferMarktCupScraper{}
 }
 
-func (c *TransferMarktLeagueScraper) GetMatchList(round domain.Round) (*[]domain.Match, error) {
-	url := fmt.Sprintf("https://www.transfermarkt.com.br/%s/spieltag/wettbewerb/%s/saison_id/%s/spieltag/%s",
-		round.Season.Competition.CodeName,
-		round.Season.Competition.Code,
-		round.Season.Code,
-		round.Code)
+func (c *TransferMarktCupScraper) GetMatchList(season domain.Season) (*[]domain.Match, error) {
+	url := fmt.Sprintf("https://www.transfermarkt.com.br/%s/gesamtspielplan/pokalwettbewerb/%s/saison_id/%s",
+		season.Competition.CodeName,
+		season.Competition.Code,
+		season.Code)
 
 	doc := c.getDocument(url)
 	matches := make([]domain.Match, 0)
 
-	doc.Find("div.footer a[href*='bericht/index/spielbericht/']").Each(
+	doc.Find(".ergebnis-link").Each(
 		func(i int, s *goquery.Selection) {
 			matchDetailsUrl, _ := s.Attr("href")
 			match, _ := c.getMatchDetails(matchDetailsUrl)
@@ -42,7 +41,7 @@ func (c *TransferMarktLeagueScraper) GetMatchList(round domain.Round) (*[]domain
 	return &matches, nil
 }
 
-func (c *TransferMarktLeagueScraper) getMatchDetails(url string) (*domain.Match, error) {
+func (c *TransferMarktCupScraper) getMatchDetails(url string) (*domain.Match, error) {
 	doc := c.getDocument("https://www.transfermarkt.com.br" + url)
 	match := domain.Match{
 		HomeScore: -1,
@@ -74,6 +73,11 @@ func (c *TransferMarktLeagueScraper) getMatchDetails(url string) (*domain.Match,
 		match.AwayScore, _ = strconv.Atoi(scorePattern.FindStringSubmatch(score)[2])
 	}
 
+	round := strings.TrimSpace(strings.Split(doc.Find(".sb-datum").Text(), "|")[0])
+	if strings.Contains(round, "Grupo") {
+		match.Group = round
+	}
+
 	datePattern := regexp.MustCompile(`[^0-9]*([0-9]{2}/[0-9]{2}/[0-9]{2})[^0-9]*([0-9]{2}:[0-9]{2})`)
 	dateSplit := datePattern.FindStringSubmatch(doc.Find(".sb-datum").Text())
 	formatter, _ := goment.New(dateSplit[1]+dateSplit[2], "DD/MM/YYHH:mm")
@@ -84,7 +88,7 @@ func (c *TransferMarktLeagueScraper) getMatchDetails(url string) (*domain.Match,
 	return &match, nil
 }
 
-func (c *TransferMarktLeagueScraper) getDocument(url string) *goquery.Document {
+func (c *TransferMarktCupScraper) getDocument(url string) *goquery.Document {
 	fmt.Println(url)
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", url, nil)
@@ -97,7 +101,7 @@ func (c *TransferMarktLeagueScraper) getDocument(url string) *goquery.Document {
 	return doc
 }
 
-func (c *TransferMarktLeagueScraper) attr(n *html.Node, key string) string {
+func (c *TransferMarktCupScraper) attr(n *html.Node, key string) string {
 	if n.Type == html.ElementNode && n.Data == "a" {
 		for _, a := range n.Attr {
 			if a.Key == key {
