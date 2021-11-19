@@ -13,13 +13,9 @@ var (
 )
 
 func main() {
-	//tournamentRepository := repository.NewTournamentRepository(database)
-	//tournament, _ := tournamentRepository.GetTournament(154298)
-	//json, _ := json.Marshal(tournament)
-	//fmt.Println(string(json))
 	scraper := scraper.NewTransferMarktLeagueScraper()
 	scraper.GetMatchList(domain.Round{
-		Code: "10",
+		Code: "30",
 		Season: domain.Season{
 			Code: "2020",
 			Competition: domain.Competition{
