@@ -5,7 +5,7 @@ import (
 
 	// "github.com/giancarlobastos/loteca-backend/domain"
 	// "github.com/giancarlobastos/loteca-backend/scraper"
-	"github.com/giancarlobastos/loteca-backend/converter"
+	"github.com/giancarlobastos/loteca-backend/image"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -34,7 +34,7 @@ func main() {
 	// 	},
 	// })
 	// defer destroy()
-	converter.ConvertSvgToPngWithChrome("https://s.glbimg.com/es/sde/f/organizacoes/2020/02/12/botsvg.svg", "./assets/test.png")
+	image.ConvertSvgToPngWithChrome("https://s.glbimg.com/es/sde/f/organizacoes/2020/02/12/botsvg.svg", "./assets/test.png")
 }
 
 // func init() {
