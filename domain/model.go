@@ -11,6 +11,7 @@ type Competition struct {
 	CodeName string
 	Division string
 	Logo     string
+	Rounds   uint32
 }
 
 type Match struct {

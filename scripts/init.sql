@@ -34,12 +34,15 @@ CREATE TABLE `competition` (
   `division` varchar(255),
   `code` varchar(255),
   `code_name` varchar(255),
-  `logo` varchar(255)
+  `logo` varchar(255),
+  `rounds` int,
+  `ended` boolean
 );
 
 CREATE TABLE `season` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
-  `name` int,
+  `name` varchar(255),
+  `code` int,
   `competition_id` int
 );
 
@@ -67,6 +70,7 @@ CREATE TABLE `round` (
   `name` varchar(255),
   `number` int,
   `code` varchar(255),
+  `ended` boolean,
   `season_id` int
 );
 

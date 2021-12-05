@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+
 	"github.com/giancarlobastos/loteca-backend/domain"
 )
 
@@ -15,8 +16,40 @@ func NewCompetitionRepository(db *sql.DB) *CompetitionRepository {
 	}
 }
 
-func (pr *CompetitionRepository) GetCompetition(id int) (domain.Competition, error) {
-	competitions, err := pr.getCompetitions("SELECT id, name, division, logo FROM competition WHERE id = ?", id)
+func (cr *CompetitionRepository) GetOpenSeasons() (seasons []domain.Season, err error) {
+	rows, err := cr.db.Query(
+		"SELECT s.id, s.name, s.code, c.code c_code, c.code_name c_code_name " +
+			"FROM season s " +
+			"JOIN competition c ON s.competition_id = c.id " +
+			"WHERE c.ended IS NOT TRUE")
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var season domain.Season
+		if err := rows.Scan(
+			&season.Id,
+			&season.Name,
+			&season.Code,
+			&season.Competition.Code,
+			&season.Competition.CodeName); err != nil {
+			return nil, err
+		}
+		seasons = append(seasons, season)
+	}
+
+	return seasons, nil
+}
+
+func (cr *CompetitionRepository) GetCompetition(id int) (domain.Competition, error) {
+	competitions, err := cr.getCompetitions(
+		"SELECT id, name, division, code, code_name, logo "+
+			"FROM competition "+
+			"WHERE id = ?", id)
 
 	if err != nil {
 		return domain.Competition{}, err
@@ -29,8 +62,8 @@ func (pr *CompetitionRepository) GetCompetition(id int) (domain.Competition, err
 	return competitions[0], nil
 }
 
-func (pr *CompetitionRepository) getCompetitions(query string, args ...interface{}) (competitions []domain.Competition, err error) {
-	rows, err := pr.db.Query(query, args...)
+func (cr *CompetitionRepository) getCompetitions(query string, args ...interface{}) (competitions []domain.Competition, err error) {
+	rows, err := cr.db.Query(query, args...)
 
 	if err != nil {
 		return nil, err

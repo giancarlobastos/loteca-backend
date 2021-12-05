@@ -1,5 +1,5 @@
-INSERT INTO `country` (`id`, `name`)
-VALUES (NULL, 'Brasil');
+INSERT INTO competition(name, division, code, code_name, rounds)
+VALUES ('Campeonato Brasileiro', 'A', 'BRA1', 'campeonato-brasileiro-serie-a', 38);
 
-INSERT INTO tournament
-VALUES (154298, 'Campeonato Brasileiro', 'A', 'https://www.playmakerstats.com/img/logos/edicoes/79735_imgbank_.png');
+INSERT INTO season(name, code, competition_id)
+VALUES ('2021', 2021, LAST_INSERT_ID());
