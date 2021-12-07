@@ -4,23 +4,27 @@ import (
 	"time"
 )
 
+type Team struct {
+	Id      uint32
+	Name    string
+	Logo    string
+	Country string
+}
+
 type Competition struct {
 	Id       uint32
 	Name     string
-	Code     string
-	CodeName string
 	Division string
 	Logo     string
-	Rounds   uint32
+	Ended    bool
 }
 
 type Match struct {
 	Id        uint32
-	Season    string
-	Round     string
-	Group     string
-	HomeId    uint32
-	AwayId    uint32
+	Round     Round
+	Group     Group
+	Home      Team
+	Away      Team
 	Stadium   string
 	StartAt   time.Time
 	HomeScore int
@@ -28,16 +32,29 @@ type Match struct {
 }
 
 type Round struct {
-	Id     uint32
-	Name   string
-	Number int
-	Code   string
-	Season Season
+	Id          uint32
+	Name        string
+	Number      int
+	Ended       bool
+	Competition Competition
+	Season      Season
 }
 
 type Season struct {
-	Id          uint32
-	Name        string
-	Code        string
-	Competition Competition
+	Id   uint32
+	Name string
+	Code string
+}
+
+type Group struct {
+	Id   uint32
+	Name string
+}
+
+type Stadium struct {
+	Id      uint32
+	Name    string
+	City    string
+	State   string
+	Country string
 }

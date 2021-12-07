@@ -1,61 +1,41 @@
 CREATE TABLE `team` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `id` int PRIMARY KEY,
   `name` varchar(255),
-  `logo` varchar(255)
+  `logo` varchar(255),
+  `country_id` int
 );
 
 CREATE TABLE `stadium` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255),
-  `city_id` int
-);
-
-CREATE TABLE `city` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
-  `name` varchar(255),
-  `state_id` int
-);
-
-CREATE TABLE `state` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
-  `name` varchar(255),
-  `code` varchar(255),
+  `city` varchar(255),
+  `state` varchar(255),
   `country_id` int
 );
 
 CREATE TABLE `country` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `id` int PRIMARY KEY,
   `name` varchar(255)
 );
 
 CREATE TABLE `competition` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `id` int PRIMARY KEY,
   `name` varchar(255),
   `division` varchar(255),
-  `code` varchar(255),
-  `code_name` varchar(255),
   `logo` varchar(255),
-  `rounds` int,
   `ended` boolean
 );
 
 CREATE TABLE `season` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255),
-  `code` int,
-  `competition_id` int
-);
-
-CREATE TABLE `team_season` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
-  `season_id` int,
-  `team_id` int
+  `code` int
 );
 
 CREATE TABLE `group` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255),
-  `code` varchar(255),
+  `competition_id` int,
   `season_id` int
 );
 
@@ -69,8 +49,8 @@ CREATE TABLE `round` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255),
   `number` int,
-  `code` varchar(255),
   `ended` boolean,
+  `competition_id` int,
   `season_id` int
 );
 
@@ -138,23 +118,19 @@ CREATE TABLE `match_odds` (
   PRIMARY KEY (`platform_id`, `match_id`)
 );
 
-ALTER TABLE `stadium` ADD FOREIGN KEY (`city_id`) REFERENCES `city` (`id`);
+ALTER TABLE `team` ADD FOREIGN KEY (`country_id`) REFERENCES `country` (`id`);
 
-ALTER TABLE `city` ADD FOREIGN KEY (`state_id`) REFERENCES `state` (`id`);
+ALTER TABLE `stadium` ADD FOREIGN KEY (`country_id`) REFERENCES `country` (`id`);
 
-ALTER TABLE `state` ADD FOREIGN KEY (`country_id`) REFERENCES `country` (`id`);
-
-ALTER TABLE `season` ADD FOREIGN KEY (`competition_id`) REFERENCES `competition` (`id`);
-
-ALTER TABLE `team_season` ADD FOREIGN KEY (`season_id`) REFERENCES `season` (`id`);
-
-ALTER TABLE `team_season` ADD FOREIGN KEY (`team_id`) REFERENCES `team` (`id`);
+ALTER TABLE `group` ADD FOREIGN KEY (`competition_id`) REFERENCES `competition` (`id`);
 
 ALTER TABLE `group` ADD FOREIGN KEY (`season_id`) REFERENCES `season` (`id`);
 
 ALTER TABLE `team_group` ADD FOREIGN KEY (`group_id`) REFERENCES `group` (`id`);
 
 ALTER TABLE `team_group` ADD FOREIGN KEY (`team_id`) REFERENCES `team` (`id`);
+
+ALTER TABLE `round` ADD FOREIGN KEY (`competition_id`) REFERENCES `competition` (`id`);
 
 ALTER TABLE `round` ADD FOREIGN KEY (`season_id`) REFERENCES `season` (`id`);
 
