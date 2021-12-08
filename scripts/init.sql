@@ -2,20 +2,15 @@ CREATE TABLE `team` (
   `id` int PRIMARY KEY,
   `name` varchar(255),
   `logo` varchar(255),
-  `country_id` int
+  `country` varchar(255)
 );
 
 CREATE TABLE `stadium` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `id` int PRIMARY KEY,
   `name` varchar(255),
   `city` varchar(255),
   `state` varchar(255),
-  `country_id` int
-);
-
-CREATE TABLE `country` (
-  `id` int PRIMARY KEY,
-  `name` varchar(255)
+  `country` varchar(255)
 );
 
 CREATE TABLE `competition` (
@@ -117,10 +112,6 @@ CREATE TABLE `match_odds` (
   `updated_at` timestamp,
   PRIMARY KEY (`platform_id`, `match_id`)
 );
-
-ALTER TABLE `team` ADD FOREIGN KEY (`country_id`) REFERENCES `country` (`id`);
-
-ALTER TABLE `stadium` ADD FOREIGN KEY (`country_id`) REFERENCES `country` (`id`);
 
 ALTER TABLE `group` ADD FOREIGN KEY (`competition_id`) REFERENCES `competition` (`id`);
 

@@ -14,10 +14,13 @@ var (
 )
 
 func main() {
+	teamRepository := repository.NewTeamRepository(database)
 	competitionRepository := repository.NewCompetitionRepository(database)
 	apiClient := client.NewApiFootballClient()
-	updateService := service.NewUpdateService(competitionRepository, apiClient)
-	updateService.ImportTeams()
+	
+	_ = service.NewUpdateService(teamRepository, competitionRepository, apiClient)
+	// updateService.ImportTeamsAndStadiums()
+
 	defer destroy()
 	//image.ConvertSvgToPngWithChrome("https://s.glbimg.com/es/sde/f/organizacoes/2020/02/12/botsvg.svg", "./assets/test.png")
 }

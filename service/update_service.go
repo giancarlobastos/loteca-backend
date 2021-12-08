@@ -1,35 +1,36 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/giancarlobastos/loteca-backend/client"
 	"github.com/giancarlobastos/loteca-backend/domain"
 	"github.com/giancarlobastos/loteca-backend/repository"
 )
 
 type UpdateService struct {
+	teamRepository        *repository.TeamRepository
 	competitionRepository *repository.CompetitionRepository
 	apiClient             *client.ApiFootballClient
 }
 
 func NewUpdateService(
+	teamRepository *repository.TeamRepository,
 	competitionRepository *repository.CompetitionRepository,
 	apiClient *client.ApiFootballClient) *UpdateService {
 	return &UpdateService{
+		teamRepository:        teamRepository,
 		competitionRepository: competitionRepository,
 		apiClient:             apiClient,
 	}
 }
 
 func (us *UpdateService) ImportTeamsAndStadiums() error {
-	countries := [...]string{"Brazil", "Argentina", "Italy", "Germany", "Spain", "England", "France", "Portugal"}
+	countries := [...]string{"Brazil", "Argentina", "Italy", "Germany", "Spain"}
 	for _, country := range countries {
 		teams, stadiums, err := us.getTeamsAndStadiums(country)
 
-		if err != nil {
-			fmt.Printf("teams: %v\n", teams)
-			fmt.Printf("stadiums: %v\n", stadiums)
+		if err == nil {
+			us.teamRepository.InsertTeams(teams)
+			us.teamRepository.InsertStadiums(stadiums)
 		}
 	}
 	return nil

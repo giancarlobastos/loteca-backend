@@ -34,9 +34,7 @@ func (cr *CompetitionRepository) GetOpenSeasons() (seasons []domain.Season, err 
 		if err := rows.Scan(
 			&season.Id,
 			&season.Name,
-			&season.Code,
-			&season.Competition.Code,
-			&season.Competition.CodeName); err != nil {
+			&season.Code); err != nil {
 			return nil, err
 		}
 		seasons = append(seasons, season)
