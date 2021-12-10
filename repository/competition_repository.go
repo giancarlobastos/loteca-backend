@@ -16,70 +16,36 @@ func NewCompetitionRepository(db *sql.DB) *CompetitionRepository {
 	}
 }
 
-func (cr *CompetitionRepository) GetOpenSeasons() (seasons []domain.Season, err error) {
-	rows, err := cr.db.Query(
-		"SELECT s.id, s.name, s.code, c.code c_code, c.code_name c_code_name " +
-			"FROM season s " +
-			"JOIN competition c ON s.competition_id = c.id " +
-			"WHERE c.ended IS NOT TRUE")
+func (cr *CompetitionRepository) InsertCompetitions(competitions *[]domain.Competition) error {
+	stmt, err := cr.db.Prepare("INSERT IGNORE INTO competition(id, name, logo, type, country) VALUES(?, ?, ?, ?, ?)")
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	defer rows.Close()
+	defer stmt.Close()
 
-	for rows.Next() {
-		var season domain.Season
-		if err := rows.Scan(
-			&season.Id,
-			&season.Name,
-			&season.Code); err != nil {
-			return nil, err
-		}
-		seasons = append(seasons, season)
+	for _, competition := range *competitions {
+		stmt.Exec(competition.Id, competition.Name, competition.Logo, competition.Type, competition.Country)
 	}
 
-	return seasons, nil
+	return nil
 }
 
-func (cr *CompetitionRepository) GetCompetition(id int) (domain.Competition, error) {
-	competitions, err := cr.getCompetitions(
-		"SELECT id, name, division, code, code_name, logo "+
-			"FROM competition "+
-			"WHERE id = ?", id)
+func (cr *CompetitionRepository) InsertSeasons(seasons *[]domain.Season) error {
+	stmt, err := cr.db.Prepare("INSERT IGNORE INTO season(competition_id, year, name, ended) VALUES(?, ?, ?, ?)")
 
 	if err != nil {
-		return domain.Competition{}, err
+		return err
 	}
 
-	if len(competitions) == 0 {
-		return domain.Competition{}, sql.ErrNoRows
-	}
+	defer stmt.Close()
 
-	return competitions[0], nil
-}
-
-func (cr *CompetitionRepository) getCompetitions(query string, args ...interface{}) (competitions []domain.Competition, err error) {
-	rows, err := cr.db.Query(query, args...)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var competition domain.Competition
-		if err := rows.Scan(
-			&competition.Id,
-			&competition.Name,
-			&competition.Division,
-			&competition.Logo); err != nil {
-			return nil, err
+	for _, season := range *seasons {
+		if (domain.Season{}) != season {
+			stmt.Exec(season.Competition.Id, season.Year, season.Name, season.Ended)
 		}
-		competitions = append(competitions, competition)
 	}
 
-	return competitions, nil
+	return nil
 }

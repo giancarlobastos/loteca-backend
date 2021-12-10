@@ -1,11 +1,43 @@
+-- phpMyAdmin SQL Dump
+-- version 5.1.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: mysql
+-- Generation Time: Dec 10, 2021 at 09:16 AM
+-- Server version: 8.0.21
+-- PHP Version: 7.4.20
+
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
+
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `loteca`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `stadium`
+--
+
+-- CREATE TABLE `stadium` (
+--   `id` int NOT NULL,
+--   `name` varchar(255) DEFAULT NULL,
+--   `city` varchar(255) DEFAULT NULL,
+--   `state` varchar(255) DEFAULT NULL,
+--   `country` varchar(255) DEFAULT NULL
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `stadium`
+--
 
 INSERT INTO `stadium` (`id`, `name`, `city`, `state`, `country`) VALUES
 (0, '', '', '', 'England'),
@@ -3309,6 +3341,15 @@ INSERT INTO `stadium` (`id`, `name`, `city`, `state`, `country`) VALUES
 (12657, 'Estádio Governador Alberto Tavares Silva', 'Teresina, Piauí', '', 'Brazil'),
 (12658, 'Estádio Municipal Tibério Barbosa Nunes', 'Floriano, Piauí', '', 'Brazil');
 
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `stadium`
+--
+-- ALTER TABLE `stadium`
+--   ADD PRIMARY KEY (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

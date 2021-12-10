@@ -1,12 +1,3 @@
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-
 CREATE TABLE `team` (
   `id` int PRIMARY KEY,
   `name` varchar(255),
@@ -27,21 +18,23 @@ CREATE TABLE `competition` (
   `name` varchar(255),
   `division` varchar(255),
   `logo` varchar(255),
-  `type` varchar(255)
+  `type` varchar(255),
+  `country` varchar(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `season` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `competition_id` int,
+  `year` int,
   `name` varchar(255),
-  `code` int,
-  `ended` boolean
+  `ended` boolean,
+  PRIMARY KEY (`competition_id`, `year`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `group` (
   `id` int PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255),
   `competition_id` int,
-  `season_id` int
+  `year` int
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `team_group` (
@@ -56,7 +49,7 @@ CREATE TABLE `round` (
   `number` int,
   `ended` boolean,
   `competition_id` int,
-  `season_id` int
+  `year` int
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `match` (
@@ -123,17 +116,15 @@ CREATE TABLE `match_odds` (
   PRIMARY KEY (`platform_id`, `match_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-ALTER TABLE `group` ADD FOREIGN KEY (`competition_id`) REFERENCES `competition` (`id`);
+ALTER TABLE `season` ADD FOREIGN KEY (`competition_id`) REFERENCES `competition` (`id`);
 
-ALTER TABLE `group` ADD FOREIGN KEY (`season_id`) REFERENCES `season` (`id`);
+ALTER TABLE `group` ADD FOREIGN KEY (`competition_id`, `year`) REFERENCES `season` (`competition_id`, `year`);
 
 ALTER TABLE `team_group` ADD FOREIGN KEY (`group_id`) REFERENCES `group` (`id`);
 
 ALTER TABLE `team_group` ADD FOREIGN KEY (`team_id`) REFERENCES `team` (`id`);
 
-ALTER TABLE `round` ADD FOREIGN KEY (`competition_id`) REFERENCES `competition` (`id`);
-
-ALTER TABLE `round` ADD FOREIGN KEY (`season_id`) REFERENCES `season` (`id`);
+ALTER TABLE `round` ADD FOREIGN KEY (`competition_id`, `year`) REFERENCES `season` (`competition_id`, `year`);
 
 ALTER TABLE `match` ADD FOREIGN KEY (`round_id`) REFERENCES `round` (`id`);
 
@@ -159,8 +150,3 @@ ALTER TABLE `match_odds` ADD FOREIGN KEY (`platform_id`) REFERENCES `betting_pla
 
 ALTER TABLE `match_odds` ADD FOREIGN KEY (`match_id`) REFERENCES `match` (`id`);
 
-COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

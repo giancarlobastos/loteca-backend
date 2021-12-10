@@ -17,8 +17,9 @@ func main() {
 	teamRepository := repository.NewTeamRepository(database)
 	competitionRepository := repository.NewCompetitionRepository(database)
 	apiClient := client.NewApiFootballClient()
-	
-	_ = service.NewUpdateService(teamRepository, competitionRepository, apiClient)
+
+	updateService := service.NewUpdateService(teamRepository, competitionRepository, apiClient)
+	updateService.ImportCompetitionsAndSeasons()
 	// updateService.ImportTeamsAndStadiums()
 
 	defer destroy()

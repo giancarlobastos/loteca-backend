@@ -16,6 +16,8 @@ services:
       - ./scripts/data.sql:/docker-entrypoint-initdb.d/2.sql
       - ./scripts/teams.sql:/docker-entrypoint-initdb.d/3.sql
       - ./scripts/stadiums.sql:/docker-entrypoint-initdb.d/4.sql
+      - ./scripts/competitions.sql:/docker-entrypoint-initdb.d/5.sql
+      - ./scripts/seasons.sql:/docker-entrypoint-initdb.d/6.sql
     networks:
       - loteca-network
   admin:

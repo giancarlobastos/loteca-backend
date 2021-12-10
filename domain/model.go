@@ -16,34 +16,36 @@ type Competition struct {
 	Name     string
 	Division string
 	Logo     string
-	Ended    bool
+	Type     CompetitionType
+	Country  string
 }
 
 type Match struct {
 	Id        uint32
-	Round     Round
-	Group     Group
-	Home      Team
-	Away      Team
+	Round     *Round
+	Group     *Group
+	Home      *Team
+	Away      *Team
 	Stadium   string
 	StartAt   time.Time
-	HomeScore int
-	AwayScore int
+	HomeScore uint
+	AwayScore uint
 }
 
 type Round struct {
 	Id          uint32
 	Name        string
-	Number      int
+	Number      uint
 	Ended       bool
-	Competition Competition
-	Season      Season
+	Competition *Competition
+	Year        uint
 }
 
 type Season struct {
-	Id   uint32
-	Name string
-	Code string
+	Competition *Competition
+	Year        uint
+	Name        string
+	Ended       bool
 }
 
 type Group struct {
@@ -58,3 +60,10 @@ type Stadium struct {
 	State   string
 	Country string
 }
+
+type CompetitionType string
+
+const (
+	CUP    CompetitionType = "Cup"
+	LEAGUE CompetitionType = "League"
+)
