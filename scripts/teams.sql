@@ -1,3 +1,12 @@
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
 INSERT INTO `team` (`id`, `name`, `logo`, `country`) VALUES
 (0, '', '', ''),
 (2, 'France', 'https://media.api-sports.io/football/teams/2.png', 'France'),
@@ -5153,3 +5162,9 @@ INSERT INTO `team` (`id`, `name`, `logo`, `country`) VALUES
 (18273, 'Sport Sinop', 'https://media.api-sports.io/football/teams/18273.png', 'Brazil'),
 (18274, 'Corí-Sabbá', 'https://media.api-sports.io/football/teams/18274.png', 'Brazil'),
 (18275, 'Oeirense', 'https://media.api-sports.io/football/teams/18275.png', 'Brazil');
+
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
