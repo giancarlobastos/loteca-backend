@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 )
 
 type ApiFootballClient struct {
@@ -25,6 +26,13 @@ func (c *ApiFootballClient) GetLeagues(country string) (leagueResponse *GetLeagu
 	body, _ := c.callApi("https://api-football-v1.p.rapidapi.com/v3/leagues", &params)
 	json.Unmarshal(body, &leagueResponse)
 	return leagueResponse, nil
+}
+
+func (c *ApiFootballClient) GetFixtures(leagueId uint32, year uint) (fixtureResponse *GetFixtureResponse, err error) {
+	params := map[string]string{"league": strconv.Itoa(int(leagueId)), "season": strconv.Itoa(int(year)), "timezone": "America/Sao_Paulo"}
+	body, _ := c.callApi("https://api-football-v1.p.rapidapi.com/v3/fixtures", &params)
+	json.Unmarshal(body, &fixtureResponse)
+	return fixtureResponse, nil
 }
 
 func (c *ApiFootballClient) callApi(url string, params *map[string]string) ([]byte, error) {

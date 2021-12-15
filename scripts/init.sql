@@ -53,7 +53,7 @@ CREATE TABLE `round` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `match` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `id` int PRIMARY KEY,
   `round_id` int,
   `group_id` int,
   `home_id` int,

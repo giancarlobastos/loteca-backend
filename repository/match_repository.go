@@ -2,6 +2,8 @@ package repository
 
 import (
 	"database/sql"
+
+	"github.com/giancarlobastos/loteca-backend/domain"
 )
 
 type MatchRepository struct {
@@ -14,26 +16,19 @@ func NewMatchRepository(db *sql.DB) *MatchRepository {
 	}
 }
 
-func (mr *MatchRepository) GetMatchIdsWithoutScore(id int) (ids []uint32, err error) {
-	rows, err := mr.db.Query(
-		"SELECT id " +
-			"FROM match " +
-			"WHERE home_score IS NULL " +
-			"AND start_at < NOW()")
+func (mr *MatchRepository) InsertMatches(matches *[]domain.Match) error {
+	stmt, err := mr.db.Prepare("INSERT IGNORE INTO `match`(id, home_id, away_id, stadium_id, start_at, home_score, away_score) " +
+		"SELECT ?, ?, ?, s.id, ?, ?, ? FROM stadium s WHERE s.name = ?")
 
 	if err != nil {
-		return make([]uint32, 0), err
+		return err
 	}
 
-	defer rows.Close()
+	defer stmt.Close()
 
-	for rows.Next() {
-		var id uint32
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
-		}
-		ids = append(ids, id)
+	for _, match := range *matches {
+		stmt.Exec(match.Id, match.Home.Id, match.Away.Id, match.StartAt, match.HomeScore, match.AwayScore, match.Stadium)
 	}
 
-	return ids, nil
+	return nil
 }
