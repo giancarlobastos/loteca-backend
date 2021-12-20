@@ -9,6 +9,7 @@ type Team struct {
 	Name    string
 	Logo    string
 	Country string
+	Stadium *Stadium
 }
 
 type Competition struct {
@@ -18,12 +19,11 @@ type Competition struct {
 	Logo     string
 	Type     CompetitionType
 	Country  string
+	Seasons  *[]Season
 }
 
 type Match struct {
 	Id        uint32
-	Round     *Round
-	Group     *Group
 	Home      *Team
 	Away      *Team
 	Stadium   string
@@ -33,19 +33,18 @@ type Match struct {
 }
 
 type Round struct {
-	Id          uint32
-	Name        string
-	Number      uint
-	Ended       bool
-	Competition *Competition
-	Year        uint
+	Id      uint32
+	Name    string
+	Number  uint
+	Ended   bool
+	Matches *[]Match
 }
 
 type Season struct {
-	Competition *Competition
-	Year        uint
-	Name        string
-	Ended       bool
+	Year   uint
+	Name   string
+	Ended  bool
+	Rounds *[]Round
 }
 
 type Group struct {

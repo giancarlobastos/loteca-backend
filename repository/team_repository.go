@@ -25,25 +25,19 @@ func (tr *TeamRepository) InsertTeams(teams *[]domain.Team) error {
 
 	defer stmt.Close()
 
-	for _, team := range *teams {
-		stmt.Exec(team.Id, team.Name, team.Logo, team.Country)
-	}
-
-	return nil
-}
-
-func (tr *TeamRepository) InsertStadiums(stadiums *[]domain.Stadium) error {
-	stmt, err := tr.db.Prepare("INSERT IGNORE INTO stadium(id, name, city, state, country) VALUES(?, ?, ?, ?, ?)")
+	stadiumStmt, err := tr.db.Prepare("INSERT IGNORE INTO stadium(id, name, city, state, country) VALUES(?, ?, ?, ?, ?)")
 
 	if err != nil {
 		return err
 	}
 
-	defer stmt.Close()
+	defer stadiumStmt.Close()
 
-	for _, stadium := range *stadiums {
-		if (domain.Stadium{}) != stadium {
-			stmt.Exec(stadium.Id, stadium.Name, stadium.City, stadium.State, stadium.Country)
+	for _, team := range *teams {
+		stmt.Exec(team.Id, team.Name, team.Logo, team.Country)
+
+		if (domain.Stadium{}) != *team.Stadium {
+			stadiumStmt.Exec(team.Stadium.Id, team.Stadium.Name, team.Stadium.City, team.Stadium.State, team.Stadium.Country)
 		}
 	}
 

@@ -150,3 +150,4 @@ ALTER TABLE `match_odds` ADD FOREIGN KEY (`platform_id`) REFERENCES `betting_pla
 
 ALTER TABLE `match_odds` ADD FOREIGN KEY (`match_id`) REFERENCES `match` (`id`);
 
+CREATE UNIQUE INDEX `round_index_0` ON `round` (`name`, `competition_id`, `year`);

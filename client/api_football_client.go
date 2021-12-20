@@ -2,16 +2,20 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 )
 
 type ApiFootballClient struct {
+	remainingRequestCount int
 }
 
 func NewApiFootballClient() *ApiFootballClient {
-	return &ApiFootballClient{}
+	return &ApiFootballClient{
+		remainingRequestCount: 100,
+	}
 }
 
 func (c *ApiFootballClient) GetTeams(country string) (teamResponse *GetTeamResponse, err error) {
@@ -36,6 +40,10 @@ func (c *ApiFootballClient) GetFixtures(leagueId uint32, year uint) (fixtureResp
 }
 
 func (c *ApiFootballClient) callApi(url string, params *map[string]string) ([]byte, error) {
+	if c.remainingRequestCount <= 0 {
+		return make([]byte, 0), errors.New("no remaining calls to ApiFootball")
+	}
+
 	req, _ := http.NewRequest("GET", url, nil)
 	req.Header.Add("x-rapidapi-host", "api-football-v1.p.rapidapi.com")
 	req.Header.Add("x-rapidapi-key", "dbcf853914msh8b02e0bab593853p14026djsne2424dfc2ab8")
@@ -54,6 +62,8 @@ func (c *ApiFootballClient) callApi(url string, params *map[string]string) ([]by
 	}
 
 	defer res.Body.Close()
+
+	c.remainingRequestCount, _ = strconv.Atoi(res.Header.Get("x-ratelimit-requests-remaining"))
 	body, err := ioutil.ReadAll(res.Body)
 
 	return body, err
