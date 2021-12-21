@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"log"
 )
 
 type ApiFootballClient struct {
@@ -40,6 +41,7 @@ func (c *ApiFootballClient) GetFixtures(leagueId uint32, year uint) (fixtureResp
 }
 
 func (c *ApiFootballClient) callApi(url string, params *map[string]string) ([]byte, error) {
+	log.Printf("[%s]: %v", url, params)
 	if c.remainingRequestCount <= 0 {
 		return make([]byte, 0), errors.New("no remaining calls to ApiFootball")
 	}
@@ -58,6 +60,7 @@ func (c *ApiFootballClient) callApi(url string, params *map[string]string) ([]by
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
+		log.Fatalf("Error: %v - [%s]: %v", err, url, params)
 		return make([]byte, 0), err
 	}
 

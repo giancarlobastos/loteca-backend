@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log"
 	"strconv"
 	"time"
 
@@ -42,7 +43,13 @@ func (us *UpdateService) ImportTeams() error {
 }
 
 func (us *UpdateService) getTeams(country string) (*[]domain.Team, error) {
-	response, _ := us.apiClient.GetTeams(country)
+	response, err := us.apiClient.GetTeams(country)
+
+	if err != nil {
+		log.Fatalf("Error [getTeams]: %v - [%v]", err, country)
+		return &[]domain.Team{}, err
+	}
+
 	teams := make([]domain.Team, response.Size)
 
 	for _, result := range response.Results {
@@ -75,7 +82,13 @@ func (us *UpdateService) ImportCompetitions() error {
 }
 
 func (us *UpdateService) getCompetitions(country string) (*[]domain.Competition, error) {
-	response, _ := us.apiClient.GetLeagues(country)
+	response, err := us.apiClient.GetLeagues(country)
+
+	if err != nil {
+		log.Fatalf("Error [getCompetitions]: %v - [%v]", err, country)
+		return &[]domain.Competition{}, err
+	}
+
 	competitions := make([]domain.Competition, response.Size)
 
 	for _, result := range response.Results {
@@ -103,10 +116,8 @@ func (us *UpdateService) getCompetitions(country string) (*[]domain.Competition,
 	return &competitions, nil
 }
 
-func (us *UpdateService) ImportMatches() error {
-	// countries := [...]string{"Brazil", "Argentina", "Italy", "Germany", "Spain"}
-	// for _, country := range countries {
-	competitions, err := us.competitionRepository.GetCompetitions("Brazil")
+func (us *UpdateService) ImportMatches(country string, year uint, ended bool) error {
+	competitions, err := us.competitionRepository.GetCompetitions(country, year, ended)
 
 	if err != nil {
 		return err
@@ -131,7 +142,13 @@ func (us *UpdateService) ImportMatches() error {
 }
 
 func (us *UpdateService) getRoundsWithMatches(competitionId uint32, year uint) (*[]domain.Round, error) {
-	response, _ := us.apiClient.GetFixtures(competitionId, year)
+	response, err := us.apiClient.GetFixtures(competitionId, year)
+
+	if err != nil {
+		log.Fatalf("Error [getRoundsWithMatches]: %v - [%v, %v]", err, competitionId, year)
+		return &[]domain.Round{}, err
+	}
+
 	rounds := make([]domain.Round, 0)
 
 	var roundName string
@@ -154,10 +171,10 @@ func (us *UpdateService) getRoundsWithMatches(competitionId uint32, year uint) (
 		match := domain.Match{
 			Id: result.Fixture.Id,
 			Home: &domain.Team{
-				Id: result.Teams[0].Id,
+				Id: result.Teams.Home.Id,
 			},
 			Away: &domain.Team{
-				Id: result.Teams[1].Id,
+				Id: result.Teams.Away.Id,
 			},
 			Stadium:   result.Fixture.Venue.Name,
 			StartAt:   startAt,

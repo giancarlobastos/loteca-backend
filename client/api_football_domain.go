@@ -98,7 +98,7 @@ type AvailableFixtures struct {
 type FixtureResult struct {
 	Fixture Fixture       `json:"fixture"`
 	League  FixtureLeague `json:"league"`
-	Teams   []FixtureTeam `json:"teams"`
+	Teams   FixtureTeams  `json:"teams"`
 	Goals   FixtureGoals  `json:"goals"`
 	Score   FixtureScore  `json:"score"`
 }
@@ -145,6 +145,11 @@ type FixtureLeague struct {
 	FlagUrl string `json:"flag"`
 	Season  uint   `json:"season"`
 	Round   string `json:"round"`
+}
+
+type FixtureTeams struct {
+	Home FixtureTeam `json:"home"`
+	Away FixtureTeam `json:"away"`
 }
 
 type FixtureTeam struct {

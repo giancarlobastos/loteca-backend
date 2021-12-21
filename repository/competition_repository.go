@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/giancarlobastos/loteca-backend/domain"
 )
@@ -26,7 +27,12 @@ func (cr *CompetitionRepository) InsertCompetitions(competitions *[]domain.Compe
 	defer stmt.Close()
 
 	for _, competition := range *competitions {
-		stmt.Exec(competition.Id, competition.Name, competition.Logo, competition.Type, competition.Country)
+		_, err = stmt.Exec(competition.Id, competition.Name, competition.Logo, competition.Type, competition.Country)
+
+		if err != nil {
+			log.Fatalf("Error: %v - [%v, %v, %v, %v, %v]", err, competition.Id, competition.Name, competition.Logo, competition.Type, competition.Country)
+		}
+
 		cr.insertSeasons(competition.Id, competition.Seasons)
 	}
 
@@ -44,18 +50,22 @@ func (cr *CompetitionRepository) insertSeasons(competitionId uint32, seasons *[]
 
 	for _, season := range *seasons {
 		if (domain.Season{}) != season {
-			stmt.Exec(competitionId, season.Year, season.Name, season.Ended)
+			_, err = stmt.Exec(competitionId, season.Year, season.Name, season.Ended)
+
+			if err != nil {
+				log.Fatalf("Error: %v - [%v, %v, %v, %v]", err, competitionId, season.Year, season.Name, season.Ended)
+			}
 		}
 	}
 
 	return nil
 }
 
-func (cr *CompetitionRepository) GetCompetitions(country string) (*[]domain.Competition, error) {
+func (cr *CompetitionRepository) GetCompetitions(country string, year uint, ended bool) (*[]domain.Competition, error) {
 	stmt, err := cr.db.Prepare("SELECT c.id, s.year, s.ended " +
 		"FROM competition c " +
 		"JOIN season s ON s.competition_id = c.id " +
-		"WHERE c.country = ? " +
+		"WHERE c.country = ? AND s.ended = ? AND s.year = ? " +
 		"ORDER BY 1, 2")
 	competitions := make([]domain.Competition, 0)
 
@@ -65,9 +75,10 @@ func (cr *CompetitionRepository) GetCompetitions(country string) (*[]domain.Comp
 
 	defer stmt.Close()
 
-	rows, err := stmt.Query(country)
+	rows, err := stmt.Query(country, ended, year)
 
 	if err != nil {
+		log.Fatalf("Error: %v - [%v, %v, %v]", err, country, year, ended)
 		return &competitions, err
 	}
 

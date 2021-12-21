@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/giancarlobastos/loteca-backend/domain"
 )
@@ -30,15 +31,25 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId uint32, year uin
 
 	if err != nil {
 		return err
-
 	}
 
 	defer roundStmt.Close()
 
 	for _, round := range *rounds {
 		roundStmt.Exec(round.Name, false, competitionId, year)
+
+		if err != nil {
+			log.Fatalf("Error: %v - [%v, %v, %v, %v]", err, round.Name, false, competitionId, year)
+			return err
+		}
+
 		for _, match := range *round.Matches {
 			stmt.Exec(match.Id, round.Name, match.Home.Id, match.Away.Id, match.Stadium, match.StartAt, match.HomeScore, match.AwayScore)
+
+			if err != nil {
+				log.Fatalf("Error: %v - [%v, %v, %v, %v, %v, %v, %v, %v]", err, match.Id, round.Name, match.Home.Id, match.Away.Id, match.Stadium, match.StartAt, match.HomeScore, match.AwayScore)
+				return err
+			}
 		}
 	}
 

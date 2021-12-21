@@ -2,10 +2,8 @@ package main
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/giancarlobastos/loteca-backend/client"
-	"github.com/giancarlobastos/loteca-backend/domain"
 	"github.com/giancarlobastos/loteca-backend/repository"
 	"github.com/giancarlobastos/loteca-backend/service"
 	_ "github.com/go-sql-driver/mysql"
@@ -21,17 +19,11 @@ func main() {
 	matchRepository := repository.NewMatchRepository(database)
 	apiClient := client.NewApiFootballClient()
 
-	_ = service.NewUpdateService(teamRepository, competitionRepository, apiClient)
-
-	match := &[]domain.Match{{Id: 123, Home: &domain.Team{
-		Id: 126,
-	}, Away: &domain.Team{
-		Id: 126,
-	}, Stadium: "Estadio Islas Malvinas", StartAt: time.Now()}}
-	matchRepository.InsertMatches(match)
-	// updateService := service.NewUpdateService(teamRepository, competitionRepository, apiClient)
+	// _ := service.NewUpdateService(teamRepository, competitionRepository, apiClient)
+	updateService := service.NewUpdateService(teamRepository, competitionRepository, matchRepository, apiClient)
 	// updateService.ImportCompetitionsAndSeasons()
 	// updateService.ImportTeamsAndStadiums()
+	updateService.ImportMatches("Brazil", 2020, true)
 
 	defer destroy()
 	//image.ConvertSvgToPngWithChrome("https://s.glbimg.com/es/sde/f/organizacoes/2020/02/12/botsvg.svg", "./assets/test.png")
