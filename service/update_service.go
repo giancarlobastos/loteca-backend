@@ -30,15 +30,17 @@ func NewUpdateService(
 	}
 }
 
-func (us *UpdateService) ImportTeams() error {
-	countries := [...]string{"Brazil", "Argentina", "Italy", "Germany", "Spain"}
-	for _, country := range countries {
-		teams, err := us.getTeams(country)
+func (us *UpdateService) GetTeams(country string) (*[]domain.Team, error) {
+	return us.teamRepository.GetTeams(country)
+}
 
-		if err == nil {
-			us.teamRepository.InsertTeams(teams)
-		}
+func (us *UpdateService) ImportTeams(country string) error {
+	teams, err := us.getTeams(country)
+
+	if err == nil {
+		us.teamRepository.InsertTeams(teams)
 	}
+
 	return nil
 }
 
@@ -69,15 +71,17 @@ func (us *UpdateService) getTeams(country string) (*[]domain.Team, error) {
 	return &teams, nil
 }
 
-func (us *UpdateService) ImportCompetitions() error {
-	countries := [...]string{"Brazil", "Argentina", "Italy", "Germany", "Spain", "France", "England"}
-	for _, country := range countries {
-		competitions, err := us.getCompetitions(country)
+func (us *UpdateService) GetCompetitions(country string, year uint) (*[]domain.Competition, error) {
+	return us.competitionRepository.GetCompetitions(country, year, false)
+}
 
-		if err == nil {
-			us.competitionRepository.InsertCompetitions(competitions)
-		}
+func (us *UpdateService) ImportCompetitions(country string) error {
+	competitions, err := us.getCompetitions(country)
+
+	if err == nil {
+		us.competitionRepository.InsertCompetitions(competitions)
 	}
+
 	return nil
 }
 
@@ -114,6 +118,10 @@ func (us *UpdateService) getCompetitions(country string) (*[]domain.Competition,
 		competitions = append(competitions, competition)
 	}
 	return &competitions, nil
+}
+
+func (us *UpdateService) GetMatches(competitionId uint32, year uint) (*[]domain.MatchVO, error) {
+	return us.matchRepository.GetMatches(competitionId, year)
 }
 
 func (us *UpdateService) ImportMatches(country string, year uint, ended bool) error {

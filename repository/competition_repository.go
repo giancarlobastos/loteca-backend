@@ -18,7 +18,9 @@ func NewCompetitionRepository(db *sql.DB) *CompetitionRepository {
 }
 
 func (cr *CompetitionRepository) InsertCompetitions(competitions *[]domain.Competition) error {
-	stmt, err := cr.db.Prepare("INSERT IGNORE INTO competition(id, name, logo, type, country) VALUES(?, ?, ?, ?, ?)")
+	stmt, err := cr.db.Prepare(
+		`INSERT IGNORE INTO competition(id, name, logo, type, country)
+		 VALUES(?, ?, ?, ?, ?)`)
 
 	if err != nil {
 		return err
@@ -40,7 +42,9 @@ func (cr *CompetitionRepository) InsertCompetitions(competitions *[]domain.Compe
 }
 
 func (cr *CompetitionRepository) insertSeasons(competitionId uint32, seasons *[]domain.Season) error {
-	stmt, err := cr.db.Prepare("INSERT IGNORE INTO season(competition_id, year, name, ended) VALUES(?, ?, ?, ?)")
+	stmt, err := cr.db.Prepare(
+		`INSERT IGNORE INTO season(competition_id, year, name, ended)
+		 VALUES(?, ?, ?, ?)`)
 
 	if err != nil {
 		return err
@@ -62,11 +66,12 @@ func (cr *CompetitionRepository) insertSeasons(competitionId uint32, seasons *[]
 }
 
 func (cr *CompetitionRepository) GetCompetitions(country string, year uint, ended bool) (*[]domain.Competition, error) {
-	stmt, err := cr.db.Prepare("SELECT c.id, s.year, s.ended " +
-		"FROM competition c " +
-		"JOIN season s ON s.competition_id = c.id " +
-		"WHERE c.country = ? AND s.ended = ? AND s.year = ? " +
-		"ORDER BY 1, 2")
+	stmt, err := cr.db.Prepare(
+		`SELECT c.id, c.name, s.year, s.ended
+		 FROM competition c
+		 JOIN season s ON s.competition_id = c.id
+		 WHERE c.country = ? AND s.ended = ? AND s.year = ?
+		 ORDER BY 1, 2`)
 	competitions := make([]domain.Competition, 0)
 
 	if err != nil {
@@ -86,15 +91,17 @@ func (cr *CompetitionRepository) GetCompetitions(country string, year uint, ende
 
 	competition := domain.Competition{}
 	var competitionId uint32 = 0
+	var competitionName string
 
 	for rows.Next() {
 		season := domain.Season{}
-		rows.Scan(&competitionId, &season.Year, &season.Ended)
+		rows.Scan(&competitionId, &competitionName, &season.Year, &season.Ended)
 
 		if competition.Id != competitionId {
 			seasons := make([]domain.Season, 0)
 			competition = domain.Competition{
 				Id:      competitionId,
+				Name:    competitionName,
 				Seasons: &seasons,
 			}
 
