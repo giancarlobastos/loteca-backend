@@ -19,3 +19,11 @@ func NewApiService(
 func (as *ApiService) GetCurrentLottery() (loterry *domain.Lottery, err error) {
 	return as.lotteryRepository.GetCurrentLottery()
 }
+
+func (as *ApiService) GetLottery(number int) (loterry *domain.Lottery, err error) {
+	return as.lotteryRepository.GetLottery(number)
+}
+
+func (as *ApiService) CreateLottery(lottery domain.Lottery) (loterry *domain.Lottery, err error) {
+	return as.lotteryRepository.CreateLottery(lottery)
+}

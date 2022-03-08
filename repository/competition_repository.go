@@ -113,3 +113,45 @@ func (cr *CompetitionRepository) GetCompetitions(country string, year uint, ende
 
 	return &competitions, err
 }
+func (cr *CompetitionRepository) GetCompetition(competitionId uint32, year uint) (*domain.Competition, error) {
+	stmt, err := cr.db.Prepare(
+		`SELECT c.id, c.name, s.year, s.ended
+		 FROM competition c
+		 JOIN season s ON s.competition_id = c.id
+		 WHERE c.id = ? AND s.year = ?
+		 ORDER BY 1, 2`)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(competitionId, year)
+
+	if err != nil {
+		log.Fatalf("Error: %v - [%v, %v]", err, competitionId, year)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	competition := domain.Competition{}
+	var competitionName string
+
+	for rows.Next() {
+		season := domain.Season{}
+		rows.Scan(&competitionId, &competitionName, &season.Year, &season.Ended)
+
+		seasons := make([]domain.Season, 0)
+		competition = domain.Competition{
+			Id:      competitionId,
+			Name:    competitionName,
+			Seasons: &seasons,
+		}
+
+		*competition.Seasons = append(*competition.Seasons, season)
+	}
+
+	return &competition, err
+}

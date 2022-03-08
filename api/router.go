@@ -2,10 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/giancarlobastos/loteca-backend/domain"
 	"github.com/giancarlobastos/loteca-backend/service"
 	"github.com/gorilla/mux"
 )
@@ -25,13 +27,48 @@ func NewRouter(as *service.ApiService, us *service.UpdateService) *Router {
 func (router *Router) Start(addr string) {
 	r := mux.NewRouter()
 	r.HandleFunc("/lotteries/current", router.getCurrentLottery).Methods("GET")
+	r.HandleFunc("/lotteries/{number}", router.getLottery).Methods("GET")
 	r.HandleFunc("/manager/{country}/teams", router.getTeams).Methods("GET")
 	r.HandleFunc("/manager/{country}/teams", router.importTeams).Methods("POST")
 	r.HandleFunc("/manager/{country}/competitions/{year}", router.getCompetitions).Methods("GET")
 	r.HandleFunc("/manager/{country}/competitions/{competitionId}/{year}/matches", router.getMatches).Methods("GET")
 	r.HandleFunc("/manager/{country}/competitions", router.importCompetitions).Methods("POST")
-	r.HandleFunc("/manager/{country}/{year}/matches", router.importMatches).Methods("POST")
+	r.HandleFunc("/manager/{country}/competitions/{competitionId}/{year}/matches", router.importMatches).Methods("POST")
+	r.HandleFunc("/manager/lotteries", router.createLottery).Methods("POST")
 	log.Fatal(http.ListenAndServe(addr, r))
+}
+
+func (router *Router) createLottery(w http.ResponseWriter, r *http.Request) {
+	var lottery domain.Lottery
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&lottery); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	defer r.Body.Close()
+
+	l, err := router.apiService.CreateLottery(lottery)
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	router.respondCreated(w, r, fmt.Sprintf("/lotteries/%d", l.Id))
+}
+
+func (router *Router) getLottery(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	number, _ := strconv.Atoi(vars["number"])
+
+	lottery, err := router.apiService.GetLottery(number)
+
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, lottery)
 }
 
 func (router *Router) getCurrentLottery(w http.ResponseWriter, r *http.Request) {
@@ -114,9 +151,9 @@ func (router *Router) getMatches(w http.ResponseWriter, r *http.Request) {
 
 func (router *Router) importMatches(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	country := vars["country"]
+	competitionId, _ := strconv.ParseUint(vars["competitionId"], 10, 32)
 	year, _ := strconv.ParseUint(vars["year"], 10, 32)
-	err := router.updateService.ImportMatches(country, uint(year), false)
+	err := router.updateService.ImportMatches(uint32(competitionId), uint(year))
 
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, err.Error())
@@ -137,3 +174,9 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.WriteHeader(code)
 	w.Write(response)
 }
+
+func (router *Router) respondCreated(w http.ResponseWriter, r *http.Request, path string) {
+	w.Header().Set("Path", r.Host+path)
+	w.WriteHeader(http.StatusCreated)
+}
+

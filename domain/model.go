@@ -26,7 +26,7 @@ type Match struct {
 	Id        uint32    `json:",omitempty"`
 	Home      *Team     `json:",omitempty"`
 	Away      *Team     `json:",omitempty"`
-	Stadium   string    `json:",omitempty"`
+	Stadium   *Stadium  `json:",omitempty"`
 	StartAt   time.Time `json:",omitempty"`
 	HomeScore uint      `json:",omitempty"`
 	AwayScore uint      `json:",omitempty"`
@@ -68,7 +68,9 @@ const (
 )
 
 type Lottery struct {
+	Id               uint32          `json:",omitempty"`
 	Number           int             `json:",omitempty"`
+	Name             string          `json:",omitempty"`
 	EstimatedPrize   float32         `json:",omitempty"`
 	MainPrize        float32         `json:",omitempty"`
 	MainPrizeWinners int             `json:",omitempty"`
@@ -88,18 +90,18 @@ type LotteryMatch struct {
 }
 
 type MatchVO struct {
-	Id              uint32    `json:",omitempty"`
-	HomeId          uint32    `json:",omitempty"`
-	HomeName        string    `json:",omitempty"`
-	AwayId          uint32    `json:",omitempty"`
-	AwayName        string    `json:",omitempty"`
-	Stadium         string    `json:",omitempty"`
-	StartAt         time.Time `json:",omitempty"`
-	HomeScore       uint      `json:",omitempty"`
-	AwayScore       uint      `json:",omitempty"`
-	RoundNumber     uint      `json:",omitempty"`
-	RoundName       string    `json:",omitempty"`
-	CompetitionId   uint32    `json:",omitempty"`
-	CompetitionName string    `json:",omitempty"`
-	Year            uint      `json:",omitempty"`
+	Id              *uint32    `json:",omitempty"`
+	HomeId          *uint32    `json:",omitempty"`
+	HomeName        *string    `json:",omitempty"`
+	AwayId          *uint32    `json:",omitempty"`
+	AwayName        *string    `json:",omitempty"`
+	Stadium         *string    `json:",omitempty"`
+	StartAt         *time.Time `json:",omitempty"`
+	HomeScore       *uint      `json:",omitempty"`
+	AwayScore       *uint      `json:",omitempty"`
+	RoundNumber     *uint      `json:",omitempty"`
+	RoundName       *string    `json:",omitempty"`
+	CompetitionId   *uint32    `json:",omitempty"`
+	CompetitionName *string    `json:",omitempty"`
+	Year            *uint      `json:",omitempty"`
 }

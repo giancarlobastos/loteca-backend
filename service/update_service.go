@@ -52,7 +52,7 @@ func (us *UpdateService) getTeams(country string) (*[]domain.Team, error) {
 		return &[]domain.Team{}, err
 	}
 
-	teams := make([]domain.Team, response.Size)
+	teams := make([]domain.Team, 0)
 
 	for _, result := range response.Results {
 		teams = append(teams, domain.Team{
@@ -93,10 +93,10 @@ func (us *UpdateService) getCompetitions(country string) (*[]domain.Competition,
 		return &[]domain.Competition{}, err
 	}
 
-	competitions := make([]domain.Competition, response.Size)
+	competitions := make([]domain.Competition, 0)
 
 	for _, result := range response.Results {
-		seasons := make([]domain.Season, len(result.Seasons))
+		seasons := make([]domain.Season, 0)
 
 		for _, season := range result.Seasons {
 			seasons = append(seasons, domain.Season{
@@ -124,26 +124,24 @@ func (us *UpdateService) GetMatches(competitionId uint32, year uint) (*[]domain.
 	return us.matchRepository.GetMatches(competitionId, year)
 }
 
-func (us *UpdateService) ImportMatches(country string, year uint, ended bool) error {
-	competitions, err := us.competitionRepository.GetCompetitions(country, year, ended)
+func (us *UpdateService) ImportMatches(competitionId uint32, year uint) error {
+	competition, err := us.competitionRepository.GetCompetition(competitionId, year)
 
 	if err != nil {
 		return err
 	}
 
-	for _, competition := range *competitions {
-		for _, season := range *competition.Seasons {
-			rounds, err := us.getRoundsWithMatches(competition.Id, season.Year)
+	for _, season := range *competition.Seasons {
+		rounds, err := us.getRoundsWithMatches(competition.Id, season.Year)
 
-			if err != nil {
-				return err
-			}
+		if err != nil {
+			return err
+		}
 
-			err = us.matchRepository.InsertRoundsAndMatches(competition.Id, season.Year, rounds)
+		err = us.matchRepository.InsertRoundsAndMatches(competition.Id, season.Year, rounds)
 
-			if err != nil {
-				return err
-			}
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -175,7 +173,12 @@ func (us *UpdateService) getRoundsWithMatches(competitionId uint32, year uint) (
 			rounds = append(rounds, round)
 		}
 
-		startAt, _ := time.Parse(time.RFC3339, result.Fixture.DateAndTime)
+		startAt, err := time.Parse(time.RFC3339, result.Fixture.DateAndTime)
+
+		if err != nil {
+			log.Fatalf("Error [getRoundsWithMatches]: %v - [%v, %v, %v]", err, competitionId, year, round.Id)
+		}
+
 		match := domain.Match{
 			Id: result.Fixture.Id,
 			Home: &domain.Team{
@@ -184,7 +187,10 @@ func (us *UpdateService) getRoundsWithMatches(competitionId uint32, year uint) (
 			Away: &domain.Team{
 				Id: result.Teams.Away.Id,
 			},
-			Stadium:   result.Fixture.Venue.Name,
+			Stadium:   &domain.Stadium{
+				Id: result.Fixture.Venue.Id,
+				Name: result.Fixture.Venue.Name,
+			},
 			StartAt:   startAt,
 			HomeScore: uint(result.Goals.Home),
 			AwayScore: uint(result.Goals.Away),

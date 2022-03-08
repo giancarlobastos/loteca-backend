@@ -20,8 +20,8 @@ func NewMatchRepository(db *sql.DB) *MatchRepository {
 func (mr *MatchRepository) InsertRoundsAndMatches(competitionId uint32, year uint, rounds *[]domain.Round) error {
 	stmt, err := mr.db.Prepare(
 		`INSERT INTO ` + "`match`" + `(id, round_id, home_id, away_id, stadium_id, start_at, home_score, away_score)
-		 VALUES(?, (SELECT r.id FROM round r WHERE r.name = ? AND r.competition_id = ? AND r.year = ?), ?, ?, (SELECT s.id FROM stadium s WHERE s.name = ?), ?, ?, ?)
-		 ON DUPLICATE KEY UPDATE round_id = VALUES(round_id), start_at = VALUES(start_at), home_score = VALUES(home_score), away_score = VALUES(away_score)`)
+		 VALUES(?, (SELECT r.id FROM round r WHERE r.name = ? AND r.competition_id = ? AND r.year = ?), ?, ?, ?, ?, ?, ?)
+		 ON DUPLICATE KEY UPDATE round_id = VALUES(round_id), start_at = VALUES(start_at), home_score = VALUES(home_score), away_score = VALUES(away_score), stadium_id = VALUES(stadium_id) `)
 
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId uint32, year uin
 	defer roundStmt.Close()
 
 	for _, round := range *rounds {
-		roundStmt.Exec(round.Name, false, competitionId, year)
+		_, err = roundStmt.Exec(round.Name, false, competitionId, year)
 
 		if err != nil {
 			log.Fatalf("Error: %v - [%v, %v, %v, %v]", err, round.Name, false, competitionId, year)
@@ -47,7 +47,7 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId uint32, year uin
 		}
 
 		for _, match := range *round.Matches {
-			stmt.Exec(match.Id, round.Name, competitionId, year, match.Home.Id, match.Away.Id, match.Stadium, match.StartAt, match.HomeScore, match.AwayScore)
+			_, err = stmt.Exec(match.Id, round.Name, competitionId, year, match.Home.Id, match.Away.Id, match.Stadium.Id, match.StartAt, match.HomeScore, match.AwayScore)
 
 			if err != nil {
 				log.Fatalf("Error: %v - [%v, %v, %v, %v, %v, %v, %v, %v]", err, match.Id, round.Name, match.Home.Id, match.Away.Id, match.Stadium, match.StartAt, match.HomeScore, match.AwayScore)
@@ -61,10 +61,8 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId uint32, year uin
 
 func (mr *MatchRepository) GetMatches(competitionId uint32, year uint) (*[]domain.MatchVO, error) {
 	stmt, err := mr.db.Prepare(
-		`SELECT m.id Id, r.number RoundNumber, r.name RoundName, r.year Year,
-			 c.id CompetitionId, c.name CompetitionName,
-			 t1.id HomeId, t1.name HomeName, t2.id AwayId, t2.name AwayName, 
-			 s.name Stadium, m.start_at StartAt, m.home_score HomeScore, m.away_score AwayScore
+		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
+		 	m.start_at, m.home_score, m.away_score
 		 FROM` + " `match` " + `m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -92,18 +90,17 @@ func (mr *MatchRepository) GetMatches(competitionId uint32, year uint) (*[]domai
 	defer rows.Close()
 
 	var match domain.MatchVO
-	
+
 	for rows.Next() {
 		match = domain.MatchVO{}
-		columns, _ := rows.Columns()
-		columnTypes, _ := rows.ColumnTypes()
-		rows.
-		log.Printf("%v", columns)
-		log.Printf("%v", columnTypes)
-		rows.Scan(&match.Id, &match.RoundNumber, &match.RoundName, &match.Year, &match.CompetitionId, &match.CompetitionName,
+		err = rows.Scan(&match.Id, &match.RoundNumber, &match.RoundName, &match.Year, &match.CompetitionId, &match.CompetitionName,
 			&match.HomeId, &match.HomeName, &match.AwayId, &match.AwayName, &match.Stadium,
 			&match.StartAt, &match.HomeScore, &match.AwayScore)
-		
+
+		if err != nil {
+			log.Printf("Error: %v", err)
+		}
+
 		matches = append(matches, match)
 	}
 
