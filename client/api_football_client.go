@@ -34,8 +34,18 @@ func (c *ApiFootballClient) GetLeagues(country string) (leagueResponse *GetLeagu
 }
 
 func (c *ApiFootballClient) GetFixtures(leagueId int, year int) (fixtureResponse *GetFixtureResponse, err error) {
-	params := map[string]string{"league": strconv.Itoa(int(leagueId)), "season": strconv.Itoa(int(year)), "timezone": "America/Sao_Paulo"}
+	params := map[string]string{"league": strconv.Itoa(leagueId), "season": strconv.Itoa(year), "timezone": "America/Sao_Paulo"}
 	body, _ := c.callApi("https://api-football-v1.p.rapidapi.com/v3/fixtures", &params)
+	json.Unmarshal(body, &fixtureResponse)
+	return fixtureResponse, nil
+}
+
+func (c *ApiFootballClient) GetHeadToHead(homeId int, awayId int) (fixtureResponse *GetFixtureResponse, err error) {
+	params := map[string]string{
+		"h2h": strconv.Itoa(homeId) + "-" + strconv.Itoa(awayId), 
+		"last": "5",
+		"timezone": "America/Sao_Paulo"}
+	body, _ := c.callApi("https://api-football-v1.p.rapidapi.com/v3/fixtures/headtohead", &params)
 	json.Unmarshal(body, &fixtureResponse)
 	return fixtureResponse, nil
 }
