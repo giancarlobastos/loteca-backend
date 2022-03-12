@@ -213,10 +213,10 @@ func (us *UpdateService) getHeadToHead(homeId int, awayId int) (*[]domain.Compet
 			Logo:    result.League.LogoUrl,
 			Country: result.League.Country,
 			Seasons: &([]domain.Season{
-				domain.Season{
+				{
 					Year: result.League.Season,
 					Rounds: &([]domain.Round{
-						domain.Round{
+						{
 							Name:    result.League.Round,
 							Matches: &([]domain.Match{match}),
 						}}),

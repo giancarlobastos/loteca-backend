@@ -31,7 +31,7 @@ func init() {
 	teamRepository := repository.NewTeamRepository(database)
 	competitionRepository := repository.NewCompetitionRepository(database)
 	matchRepository := repository.NewMatchRepository(database)
-	lotteryRepository := repository.NewLotteryRepository(database)
+	lotteryRepository := repository.NewLotteryRepository(database, matchRepository)
 
 	apiClient := client.NewApiFootballClient()
 

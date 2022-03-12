@@ -9,12 +9,16 @@ import (
 )
 
 type LotteryRepository struct {
-	db *sql.DB
+	db              *sql.DB
+	matchRepository *MatchRepository
 }
 
-func NewLotteryRepository(db *sql.DB) *LotteryRepository {
+func NewLotteryRepository(
+	db *sql.DB,
+	matchRepository *MatchRepository) *LotteryRepository {
 	return &LotteryRepository{
-		db: db,
+		db:              db,
+		matchRepository: matchRepository,
 	}
 }
 
@@ -108,55 +112,7 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 			&lottery.SidePrize, &lottery.SidePrizeWinners, &lottery.SpecialPrize, &lottery.Accumulated, &lottery.EndAt)
 	}
 
-	lottery.Matches, _ = lr.getMatches(lottery.Id)
+	lottery.Matches, _ = lr.matchRepository.GetLotteryMatches(lottery.Id)
 
 	return &lottery, err
-}
-
-func (lr *LotteryRepository) getMatches(lotteryId int) (*[]view.Match, error) {
-	stmt, err := lr.db.Prepare(
-		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
-		 	m.start_at, m.home_score, m.away_score, lm.order
-		 FROM lottery_match lm
-		 JOIN` + " `match` " + `m ON  lm.match_id = m.id
-		 JOIN round r ON m.round_id = r.id
-		 JOIN competition c ON r.competition_id = c.id
-		 JOIN team t1 ON m.home_id = t1.id
-		 JOIN team t2 ON m.away_id = t2.id
-		 LEFT JOIN stadium s ON m.stadium_id = s.id
-		 WHERE lm.lottery_id = ?
-		 ORDER BY lm.order`)
-
-	matches := make([]view.Match, 0)
-
-	if err != nil {
-		return &matches, err
-	}
-
-	defer stmt.Close()
-
-	rows, err := stmt.Query(lotteryId)
-
-	if err != nil {
-		log.Fatalf("Error: %v - [%v]", err, lotteryId)
-		return &matches, err
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		match := view.Match{
-		}
-		err = rows.Scan(&match.Id, &match.RoundNumber, &match.RoundName, &match.Year, &match.CompetitionId, &match.CompetitionName,
-			&match.HomeId, &match.HomeName, &match.AwayId, &match.AwayName, &match.Stadium,
-			&match.StartAt, &match.HomeScore, &match.AwayScore, &match.Order)
-
-		if err != nil {
-			log.Printf("Error: %v", err)
-		}
-
-		matches = append(matches, match)
-	}
-
-	return &matches, err
 }
