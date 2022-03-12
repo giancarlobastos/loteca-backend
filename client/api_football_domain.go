@@ -34,20 +34,20 @@ type TeamResult struct {
 }
 
 type Team struct {
-	Id       uint32 `json:"id"`
+	Id       int    `json:"id"`
 	Name     string `json:"name"`
 	Country  string `json:"country"`
-	Founded  uint   `json:"founded"`
+	Founded  int    `json:"founded"`
 	National bool   `json:"national"`
 	LogoUrl  string `json:"logo"`
 }
 
 type Venue struct {
-	Id       uint32 `json:"id"`
+	Id       int    `json:"id"`
 	Name     string `json:"name"`
 	Address  string `json:"address"`
 	City     string `json:"city"`
-	Capacity uint   `json:"capacity"`
+	Capacity int    `json:"capacity"`
 	Surface  string `json:"surface"`
 	ImageUrl string `json:"image"`
 }
@@ -59,7 +59,7 @@ type LeagueResult struct {
 }
 
 type League struct {
-	Id      uint32 `json:"id"`
+	Id      int    `json:"id"`
 	Name    string `json:"name"`
 	Type    string `json:"type"`
 	LogoUrl string `json:"logo"`
@@ -72,7 +72,7 @@ type Country struct {
 }
 
 type Season struct {
-	Year      uint     `json:"year"`
+	Year      int      `json:"year"`
 	StartDate string   `json:"start"`
 	EndDate   string   `json:"end"`
 	Current   bool     `json:"current"`
@@ -104,7 +104,7 @@ type FixtureResult struct {
 }
 
 type Fixture struct {
-	Id          uint32        `json:"id"`
+	Id          int           `json:"id"`
 	Referee     string        `json:"referee"`
 	Timezone    string        `json:"timezone"`
 	DateAndTime string        `json:"date"`
@@ -122,7 +122,7 @@ type FixturePeriod struct {
 type FixtureStatus struct {
 	Name           string `json:"long"`
 	Code           string `json:"short"`
-	ElapsedMinutes uint8  `json:"elapsed"`
+	ElapsedMinutes int    `json:"elapsed"`
 }
 
 type FixtureScore struct {
@@ -133,17 +133,17 @@ type FixtureScore struct {
 }
 
 type FixtureGoals struct {
-	Home uint8 `json:"home"`
-	Away uint8 `json:"away"`
+	Home *int `json:"home"`
+	Away *int `json:"away"`
 }
 
 type FixtureLeague struct {
-	Id      uint32 `json:"id"`
+	Id      int    `json:"id"`
 	Name    string `json:"name"`
 	Country string `json:"country"`
 	LogoUrl string `json:"logo"`
 	FlagUrl string `json:"flag"`
-	Season  uint   `json:"season"`
+	Season  int    `json:"season"`
 	Round   string `json:"round"`
 }
 
@@ -153,7 +153,7 @@ type FixtureTeams struct {
 }
 
 type FixtureTeam struct {
-	Id      uint32 `json:"id"`
+	Id      int    `json:"id"`
 	Name    string `json:"name"`
 	LogoUrl string `json:"logo"`
 	Winner  bool   `json:"winner"`

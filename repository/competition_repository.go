@@ -19,8 +19,12 @@ func NewCompetitionRepository(db *sql.DB) *CompetitionRepository {
 
 func (cr *CompetitionRepository) InsertCompetitions(competitions *[]domain.Competition) error {
 	stmt, err := cr.db.Prepare(
-		`INSERT IGNORE INTO competition(id, name, logo, type, country)
-		 VALUES(?, ?, ?, ?, ?)`)
+		`INSERT INTO competition(id, name, logo, type, country)
+		 VALUES(?, ?, ?, ?, ?)
+		 ON DUPLICATE KEY UPDATE 
+		 	logo = coalesce(VALUES(logo), logo), 
+			type = coalesce(VALUES(type), type), 
+			name = coalesce(VALUES(name), name)`)
 
 	if err != nil {
 		return err
@@ -41,10 +45,14 @@ func (cr *CompetitionRepository) InsertCompetitions(competitions *[]domain.Compe
 	return nil
 }
 
-func (cr *CompetitionRepository) insertSeasons(competitionId uint32, seasons *[]domain.Season) error {
+func (cr *CompetitionRepository) insertSeasons(competitionId int, seasons *[]domain.Season) error {
 	stmt, err := cr.db.Prepare(
-		`INSERT IGNORE INTO season(competition_id, year, name, ended)
-		 VALUES(?, ?, ?, ?)`)
+		`INSERT INTO season(competition_id, year, name, ended)
+		 VALUES(?, ?, ?, ?)
+		 ON DUPLICATE KEY UPDATE 
+		 	year = coalesce(VALUES(year), year), 
+			name = coalesce(VALUES(name), name), 
+			ended = coalesce(VALUES(ended), ended)`)
 
 	if err != nil {
 		return err
@@ -65,7 +73,7 @@ func (cr *CompetitionRepository) insertSeasons(competitionId uint32, seasons *[]
 	return nil
 }
 
-func (cr *CompetitionRepository) GetCompetitions(country string, year uint, ended bool) (*[]domain.Competition, error) {
+func (cr *CompetitionRepository) GetCompetitions(country string, year int, ended bool) (*[]domain.Competition, error) {
 	stmt, err := cr.db.Prepare(
 		`SELECT c.id, c.name, s.year, s.ended
 		 FROM competition c
@@ -90,7 +98,7 @@ func (cr *CompetitionRepository) GetCompetitions(country string, year uint, ende
 	defer rows.Close()
 
 	competition := domain.Competition{}
-	var competitionId uint32 = 0
+	var competitionId int = 0
 	var competitionName string
 
 	for rows.Next() {
@@ -113,7 +121,7 @@ func (cr *CompetitionRepository) GetCompetitions(country string, year uint, ende
 
 	return &competitions, err
 }
-func (cr *CompetitionRepository) GetCompetition(competitionId uint32, year uint) (*domain.Competition, error) {
+func (cr *CompetitionRepository) GetCompetition(competitionId int, year int) (*domain.Competition, error) {
 	stmt, err := cr.db.Prepare(
 		`SELECT c.id, c.name, s.year, s.ended
 		 FROM competition c

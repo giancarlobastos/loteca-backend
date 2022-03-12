@@ -19,8 +19,11 @@ func NewTeamRepository(db *sql.DB) *TeamRepository {
 
 func (tr *TeamRepository) InsertTeams(teams *[]domain.Team) error {
 	stmt, err := tr.db.Prepare(
-		`INSERT IGNORE INTO team(id, name, logo, country)
-	 	 VALUES(?, ?, ?, ?)`)
+		`INSERT INTO team(id, name, logo, country)
+	 	 VALUES(?, ?, ?, ?)
+		 ON DUPLICATE KEY UPDATE 
+			name = coalesce(VALUES(name), name), 
+			logo = coalesce(VALUES(logo), logo)`)
 
 	if err != nil {
 		return err
@@ -29,8 +32,13 @@ func (tr *TeamRepository) InsertTeams(teams *[]domain.Team) error {
 	defer stmt.Close()
 
 	stadiumStmt, err := tr.db.Prepare(
-		`INSERT IGNORE INTO stadium(id, name, city, state, country)
-		 VALUES(?, ?, ?, ?, ?)`)
+		`INSERT INTO stadium(id, name, city, state, country)
+		 VALUES(?, ?, ?, ?, ?)
+		 ON DUPLICATE KEY UPDATE 
+			name = coalesce(VALUES(name), name), 
+			city = coalesce(VALUES(city), city), 
+			state = coalesce(VALUES(state), state), 
+			country = coalesce(VALUES(country), country)`)
 
 	if err != nil {
 		return err

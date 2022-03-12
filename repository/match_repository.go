@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/giancarlobastos/loteca-backend/domain"
+	"github.com/giancarlobastos/loteca-backend/view"
 )
 
 type MatchRepository struct {
@@ -17,7 +18,7 @@ func NewMatchRepository(db *sql.DB) *MatchRepository {
 	}
 }
 
-func (mr *MatchRepository) InsertRoundsAndMatches(competitionId uint32, year uint, rounds *[]domain.Round) error {
+func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, rounds *[]domain.Round) error {
 	stmt, err := mr.db.Prepare(
 		`INSERT INTO ` + "`match`" + `(id, round_id, home_id, away_id, stadium_id, start_at, home_score, away_score)
 		 VALUES(?, (SELECT r.id FROM round r WHERE r.name = ? AND r.competition_id = ? AND r.year = ?), ?, ?, ?, ?, ?, ?)
@@ -59,7 +60,7 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId uint32, year uin
 	return nil
 }
 
-func (mr *MatchRepository) GetMatches(competitionId uint32, year uint) (*[]domain.MatchVO, error) {
+func (mr *MatchRepository) GetMatches(competitionId int, year int) (*[]view.Match, error) {
 	stmt, err := mr.db.Prepare(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
 		 	m.start_at, m.home_score, m.away_score
@@ -72,7 +73,7 @@ func (mr *MatchRepository) GetMatches(competitionId uint32, year uint) (*[]domai
 		 WHERE c.id = ? AND r.year = ?
 		 ORDER BY r.id, m.start_at`)
 
-	matches := make([]domain.MatchVO, 0)
+	matches := make([]view.Match, 0)
 
 	if err != nil {
 		return &matches, err
@@ -89,10 +90,10 @@ func (mr *MatchRepository) GetMatches(competitionId uint32, year uint) (*[]domai
 
 	defer rows.Close()
 
-	var match domain.MatchVO
+	var match view.Match
 
 	for rows.Next() {
-		match = domain.MatchVO{}
+		match = view.Match{}
 		err = rows.Scan(&match.Id, &match.RoundNumber, &match.RoundName, &match.Year, &match.CompetitionId, &match.CompetitionName,
 			&match.HomeId, &match.HomeName, &match.AwayId, &match.AwayName, &match.Stadium,
 			&match.StartAt, &match.HomeScore, &match.AwayScore)

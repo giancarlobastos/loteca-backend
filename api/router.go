@@ -111,8 +111,8 @@ func (router *Router) importTeams(w http.ResponseWriter, r *http.Request) {
 func (router *Router) getCompetitions(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	country := vars["country"]
-	year, _ := strconv.ParseUint(vars["year"], 10, 32)
-	competitions, err := router.updateService.GetCompetitions(country, uint(year))
+	year, _ := strconv.Atoi(vars["year"])
+	competitions, err := router.updateService.GetCompetitions(country, year)
 
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, err.Error())
@@ -137,9 +137,9 @@ func (router *Router) importCompetitions(w http.ResponseWriter, r *http.Request)
 
 func (router *Router) getMatches(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	competitionId, _ := strconv.ParseUint(vars["competitionId"], 10, 32)
-	year, _ := strconv.ParseUint(vars["year"], 10, 32)
-	matches, err := router.updateService.GetMatches(uint32(competitionId), uint(year))
+	competitionId, _ := strconv.Atoi(vars["competitionId"])
+	year, _ := strconv.Atoi(vars["year"])
+	matches, err := router.updateService.GetMatches(competitionId, year)
 
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, err.Error())
@@ -151,9 +151,9 @@ func (router *Router) getMatches(w http.ResponseWriter, r *http.Request) {
 
 func (router *Router) importMatches(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	competitionId, _ := strconv.ParseUint(vars["competitionId"], 10, 32)
-	year, _ := strconv.ParseUint(vars["year"], 10, 32)
-	err := router.updateService.ImportMatches(uint32(competitionId), uint(year))
+	competitionId, _ := strconv.Atoi(vars["competitionId"])
+	year, _ := strconv.Atoi(vars["year"])
+	err := router.updateService.ImportMatches(competitionId, year)
 
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, err.Error())

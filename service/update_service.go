@@ -8,6 +8,7 @@ import (
 	"github.com/giancarlobastos/loteca-backend/client"
 	"github.com/giancarlobastos/loteca-backend/domain"
 	"github.com/giancarlobastos/loteca-backend/repository"
+	"github.com/giancarlobastos/loteca-backend/view"
 )
 
 type UpdateService struct {
@@ -71,7 +72,7 @@ func (us *UpdateService) getTeams(country string) (*[]domain.Team, error) {
 	return &teams, nil
 }
 
-func (us *UpdateService) GetCompetitions(country string, year uint) (*[]domain.Competition, error) {
+func (us *UpdateService) GetCompetitions(country string, year int) (*[]domain.Competition, error) {
 	return us.competitionRepository.GetCompetitions(country, year, false)
 }
 
@@ -120,11 +121,11 @@ func (us *UpdateService) getCompetitions(country string) (*[]domain.Competition,
 	return &competitions, nil
 }
 
-func (us *UpdateService) GetMatches(competitionId uint32, year uint) (*[]domain.MatchVO, error) {
+func (us *UpdateService) GetMatches(competitionId int, year int) (*[]view.Match, error) {
 	return us.matchRepository.GetMatches(competitionId, year)
 }
 
-func (us *UpdateService) ImportMatches(competitionId uint32, year uint) error {
+func (us *UpdateService) ImportMatches(competitionId int, year int) error {
 	competition, err := us.competitionRepository.GetCompetition(competitionId, year)
 
 	if err != nil {
@@ -147,7 +148,7 @@ func (us *UpdateService) ImportMatches(competitionId uint32, year uint) error {
 	return nil
 }
 
-func (us *UpdateService) getRoundsWithMatches(competitionId uint32, year uint) (*[]domain.Round, error) {
+func (us *UpdateService) getRoundsWithMatches(competitionId int, year int) (*[]domain.Round, error) {
 	response, err := us.apiClient.GetFixtures(competitionId, year)
 
 	if err != nil {
@@ -187,13 +188,13 @@ func (us *UpdateService) getRoundsWithMatches(competitionId uint32, year uint) (
 			Away: &domain.Team{
 				Id: result.Teams.Away.Id,
 			},
-			Stadium:   &domain.Stadium{
-				Id: result.Fixture.Venue.Id,
+			Stadium: &domain.Stadium{
+				Id:   result.Fixture.Venue.Id,
 				Name: result.Fixture.Venue.Name,
 			},
 			StartAt:   startAt,
-			HomeScore: uint(result.Goals.Home),
-			AwayScore: uint(result.Goals.Away),
+			HomeScore: result.Goals.Home,
+			AwayScore: result.Goals.Away,
 		}
 
 		*round.Matches = append(*round.Matches, match)

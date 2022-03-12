@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/giancarlobastos/loteca-backend/domain"
+	"github.com/giancarlobastos/loteca-backend/view"
 )
 
 type LotteryRepository struct {
@@ -17,9 +18,9 @@ func NewLotteryRepository(db *sql.DB) *LotteryRepository {
 	}
 }
 
-func (lr *LotteryRepository) GetCurrentLottery() (*domain.Lottery, error) {
+func (lr *LotteryRepository) GetCurrentLottery() (*view.Lottery, error) {
 	query :=
-		`SELECT number, estimated_prize, main_prize, main_prize_winners, side_prize, 
+		`SELECT id, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
 			side_prize_winners, special_prize, accumulated, end_at
 	     FROM lottery 
 		 ORDER BY number DESC
@@ -28,9 +29,9 @@ func (lr *LotteryRepository) GetCurrentLottery() (*domain.Lottery, error) {
 	return lr.getLottery(query)
 }
 
-func (lr *LotteryRepository) GetLottery(number int) (*domain.Lottery, error) {
+func (lr *LotteryRepository) GetLottery(number int) (*view.Lottery, error) {
 	query :=
-		`SELECT number, estimated_prize, main_prize, main_prize_winners, side_prize, 
+		`SELECT id, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
 			side_prize_winners, special_prize, accumulated, end_at
 	     FROM lottery 
 		 WHERE number = ?`
@@ -65,10 +66,10 @@ func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lott
 	}
 
 	for _, match := range *lottery.Matches {
-		_, err = matchStmt.Exec(lottery.Number, match.Match.Id, match.Order)
+		_, err = matchStmt.Exec(lottery.Number, match.Id, match.Order)
 
 		if err != nil {
-			log.Fatalf("Error: %v - [%v, %v, %v]", err, lottery.Number, match.Match.Id, match.Order)
+			log.Fatalf("Error: %v - [%v, %v, %v]", err, lottery.Number, match.Id, match.Order)
 			return nil, err
 		}
 	}
@@ -76,7 +77,7 @@ func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lott
 	return &lottery, nil
 }
 
-func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*domain.Lottery, error) {
+func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*view.Lottery, error) {
 	stmt, err := lr.db.Prepare(query)
 
 	if err != nil {
@@ -100,12 +101,62 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*dom
 
 	defer rows.Close()
 
-	lottery := domain.Lottery{}
+	lottery := view.Lottery{}
 
 	if rows.Next() {
-		rows.Scan(&lottery.Number, &lottery.EstimatedPrize, &lottery.MainPrize, &lottery.MainPrizeWinners,
+		rows.Scan(&lottery.Id, &lottery.Number, &lottery.EstimatedPrize, &lottery.MainPrize, &lottery.MainPrizeWinners,
 			&lottery.SidePrize, &lottery.SidePrizeWinners, &lottery.SpecialPrize, &lottery.Accumulated, &lottery.EndAt)
 	}
 
+	lottery.Matches, _ = lr.getMatches(lottery.Id)
+
 	return &lottery, err
+}
+
+func (lr *LotteryRepository) getMatches(lotteryId int) (*[]view.Match, error) {
+	stmt, err := lr.db.Prepare(
+		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
+		 	m.start_at, m.home_score, m.away_score, lm.order
+		 FROM lottery_match lm
+		 JOIN` + " `match` " + `m ON  lm.match_id = m.id
+		 JOIN round r ON m.round_id = r.id
+		 JOIN competition c ON r.competition_id = c.id
+		 JOIN team t1 ON m.home_id = t1.id
+		 JOIN team t2 ON m.away_id = t2.id
+		 LEFT JOIN stadium s ON m.stadium_id = s.id
+		 WHERE lm.lottery_id = ?
+		 ORDER BY lm.order`)
+
+	matches := make([]view.Match, 0)
+
+	if err != nil {
+		return &matches, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(lotteryId)
+
+	if err != nil {
+		log.Fatalf("Error: %v - [%v]", err, lotteryId)
+		return &matches, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		match := view.Match{
+		}
+		err = rows.Scan(&match.Id, &match.RoundNumber, &match.RoundName, &match.Year, &match.CompetitionId, &match.CompetitionName,
+			&match.HomeId, &match.HomeName, &match.AwayId, &match.AwayName, &match.Stadium,
+			&match.StartAt, &match.HomeScore, &match.AwayScore, &match.Order)
+
+		if err != nil {
+			log.Printf("Error: %v", err)
+		}
+
+		matches = append(matches, match)
+	}
+
+	return &matches, err
 }
