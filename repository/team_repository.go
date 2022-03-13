@@ -26,6 +26,7 @@ func (tr *TeamRepository) InsertTeams(teams *[]domain.Team) error {
 			logo = coalesce(VALUES(logo), logo)`)
 
 	if err != nil {
+		log.Printf("Error [InsertTeams]: %v", err)
 		return err
 	}
 
@@ -41,16 +42,23 @@ func (tr *TeamRepository) InsertTeams(teams *[]domain.Team) error {
 			country = coalesce(VALUES(country), country)`)
 
 	if err != nil {
+		log.Printf("Error [InsertTeams]: %v", err)
 		return err
 	}
 
 	defer stadiumStmt.Close()
 
 	for _, team := range *teams {
-		stmt.Exec(team.Id, team.Name, team.Logo, team.Country)
+		_, err = stmt.Exec(team.Id, team.Name, team.Logo, team.Country)
+
+		if err != nil {
+			log.Printf("Error [InsertTeams]: %v - [%v %v %v %v]", err, team.Id, team.Name, team.Logo, team.Country)
+			continue
+		}
 
 		if (domain.Stadium{}) != *team.Stadium {
-			stadiumStmt.Exec(team.Stadium.Id, team.Stadium.Name, team.Stadium.City, team.Stadium.State, team.Stadium.Country)
+			_, err = stadiumStmt.Exec(team.Stadium.Id, team.Stadium.Name, team.Stadium.City, team.Stadium.State, team.Stadium.Country)
+			log.Printf("Error [InsertTeams]: %v - [%v %v %v %v %v]", err, team.Stadium.Id, team.Stadium.Name, team.Stadium.City, team.Stadium.State, team.Stadium.Country)
 		}
 	}
 
@@ -66,6 +74,7 @@ func (tr *TeamRepository) GetTeams(country string) (*[]domain.Team, error) {
 	teams := make([]domain.Team, 0)
 
 	if err != nil {
+		log.Printf("Error [GetTeams]: %v", err)
 		return &teams, err
 	}
 
@@ -74,7 +83,7 @@ func (tr *TeamRepository) GetTeams(country string) (*[]domain.Team, error) {
 	rows, err := stmt.Query(country)
 
 	if err != nil {
-		log.Fatalf("Error: %v - [%v]", err, country)
+		log.Printf("Error [GetTeams]: %v - [%v]", err, country)
 		return &teams, err
 	}
 
@@ -83,7 +92,13 @@ func (tr *TeamRepository) GetTeams(country string) (*[]domain.Team, error) {
 	team := domain.Team{}
 
 	for rows.Next() {
-		rows.Scan(&team.Id, &team.Name, &team.Country)
+		err = rows.Scan(&team.Id, &team.Name, &team.Country)
+
+		if err != nil {
+			log.Printf("Error [GetTeams]: %v - [%v %v %v]", err, team.Id, team.Name, team.Country)
+			continue
+		}
+
 		teams = append(teams, team)
 	}
 

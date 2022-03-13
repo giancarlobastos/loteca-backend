@@ -40,10 +40,38 @@ func (c *ApiFootballClient) GetFixtures(leagueId int, year int) (fixtureResponse
 	return fixtureResponse, nil
 }
 
+func (c *ApiFootballClient) GetLastFixtures(teamId int, limit int) (fixtureResponse *GetFixtureResponse, err error) {
+	params := map[string]string{"team": strconv.Itoa(teamId), "last": strconv.Itoa(limit), "timezone": "America/Sao_Paulo"}
+	body, _ := c.callApi("https://api-football-v1.p.rapidapi.com/v3/fixtures", &params)
+	json.Unmarshal(body, &fixtureResponse)
+	return fixtureResponse, nil
+}
+
+func (c *ApiFootballClient) GetLastCompetitionFixtures(leagueId int, year int, teamId int, limit int) (fixtureResponse *GetFixtureResponse, err error) {
+	params := map[string]string{"league": strconv.Itoa(leagueId), "season": strconv.Itoa(year), "team": strconv.Itoa(teamId), "last": strconv.Itoa(limit), "timezone": "America/Sao_Paulo"}
+	body, _ := c.callApi("https://api-football-v1.p.rapidapi.com/v3/fixtures", &params)
+	json.Unmarshal(body, &fixtureResponse)
+	return fixtureResponse, nil
+}
+
+func (c *ApiFootballClient) GetNextFixtures(teamId int, limit int) (fixtureResponse *GetFixtureResponse, err error) {
+	params := map[string]string{"team": strconv.Itoa(teamId), "next": strconv.Itoa(limit), "timezone": "America/Sao_Paulo"}
+	body, _ := c.callApi("https://api-football-v1.p.rapidapi.com/v3/fixtures", &params)
+	json.Unmarshal(body, &fixtureResponse)
+	return fixtureResponse, nil
+}
+
+func (c *ApiFootballClient) GetNextCompetitionFixtures(leagueId int, year int, teamId int, limit int) (fixtureResponse *GetFixtureResponse, err error) {
+	params := map[string]string{"league": strconv.Itoa(leagueId), "season": strconv.Itoa(year), "team": strconv.Itoa(teamId), "next": strconv.Itoa(limit), "timezone": "America/Sao_Paulo"}
+	body, _ := c.callApi("https://api-football-v1.p.rapidapi.com/v3/fixtures", &params)
+	json.Unmarshal(body, &fixtureResponse)
+	return fixtureResponse, nil
+}
+
 func (c *ApiFootballClient) GetHeadToHead(homeId int, awayId int) (fixtureResponse *GetFixtureResponse, err error) {
 	params := map[string]string{
-		"h2h": strconv.Itoa(homeId) + "-" + strconv.Itoa(awayId), 
-		"last": "5",
+		"h2h":      strconv.Itoa(homeId) + "-" + strconv.Itoa(awayId),
+		"last":     "5",
 		"timezone": "America/Sao_Paulo"}
 	body, _ := c.callApi("https://api-football-v1.p.rapidapi.com/v3/fixtures/headtohead", &params)
 	json.Unmarshal(body, &fixtureResponse)
@@ -70,7 +98,7 @@ func (c *ApiFootballClient) callApi(url string, params *map[string]string) ([]by
 	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
-		log.Fatalf("Error: %v - [%s]: %v", err, url, params)
+		log.Printf("Error: %v - [%s]: %v", err, url, params)
 		return make([]byte, 0), err
 	}
 

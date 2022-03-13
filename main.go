@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"log"
 
 	"github.com/giancarlobastos/loteca-backend/api"
 	"github.com/giancarlobastos/loteca-backend/client"
@@ -25,7 +26,7 @@ func init() {
 	database, err = sql.Open("mysql", "root:secret@tcp(mysql:3306)/loteca?parseTime=true")
 
 	if err != nil {
-		panic(err.Error())
+		log.Fatalf("Error [init]: %v", err)
 	}
 
 	teamRepository := repository.NewTeamRepository(database)
@@ -36,7 +37,7 @@ func init() {
 	apiClient := client.NewApiFootballClient()
 
 	updateService := service.NewUpdateService(teamRepository, competitionRepository, matchRepository, apiClient)
-	apiService := service.NewApiService(lotteryRepository)
+	apiService := service.NewApiService(lotteryRepository, updateService)
 
 	router = api.NewRouter(apiService, updateService)
 }

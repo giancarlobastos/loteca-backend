@@ -27,6 +27,7 @@ func (cr *CompetitionRepository) InsertCompetitions(competitions *[]domain.Compe
 			name = coalesce(VALUES(name), name)`)
 
 	if err != nil {
+		log.Printf("Error [InsertCompetitions]: %v", err)
 		return err
 	}
 
@@ -36,7 +37,8 @@ func (cr *CompetitionRepository) InsertCompetitions(competitions *[]domain.Compe
 		_, err = stmt.Exec(competition.Id, competition.Name, competition.Logo, competition.Type, competition.Country)
 
 		if err != nil {
-			log.Fatalf("Error: %v - [%v, %v, %v, %v, %v]", err, competition.Id, competition.Name, competition.Logo, competition.Type, competition.Country)
+			log.Printf("Error [InsertCompetitions]: %v - [%v, %v, %v, %v, %v]", err, competition.Id, competition.Name, competition.Logo, competition.Type, competition.Country)
+			continue
 		}
 
 		cr.insertSeasons(competition.Id, competition.Seasons)
@@ -55,6 +57,7 @@ func (cr *CompetitionRepository) insertSeasons(competitionId int, seasons *[]dom
 			ended = coalesce(VALUES(ended), ended)`)
 
 	if err != nil {
+		log.Printf("Error [insertSeasons]: %v - [%v]", err, competitionId)
 		return err
 	}
 
@@ -65,7 +68,7 @@ func (cr *CompetitionRepository) insertSeasons(competitionId int, seasons *[]dom
 			_, err = stmt.Exec(competitionId, season.Year, season.Name, season.Ended)
 
 			if err != nil {
-				log.Fatalf("Error: %v - [%v, %v, %v, %v]", err, competitionId, season.Year, season.Name, season.Ended)
+				log.Printf("Error: %v - [%v, %v, %v, %v]", err, competitionId, season.Year, season.Name, season.Ended)
 			}
 		}
 	}
@@ -83,6 +86,7 @@ func (cr *CompetitionRepository) GetCompetitions(country string, year int, ended
 	competitions := make([]domain.Competition, 0)
 
 	if err != nil {
+		log.Printf("Error [GetCompetitions]: %v - [%v %v]", err, country, year)
 		return &competitions, err
 	}
 
@@ -91,7 +95,7 @@ func (cr *CompetitionRepository) GetCompetitions(country string, year int, ended
 	rows, err := stmt.Query(country, ended, year)
 
 	if err != nil {
-		log.Fatalf("Error: %v - [%v, %v, %v]", err, country, year, ended)
+		log.Printf("Error [GetCompetitions]: %v - [%v, %v, %v]", err, country, year, ended)
 		return &competitions, err
 	}
 
@@ -103,7 +107,13 @@ func (cr *CompetitionRepository) GetCompetitions(country string, year int, ended
 
 	for rows.Next() {
 		season := domain.Season{}
-		rows.Scan(&competitionId, &competitionName, &season.Year, &season.Ended)
+
+		err = rows.Scan(&competitionId, &competitionName, &season.Year, &season.Ended)
+
+		if err != nil {
+			log.Printf("Error [GetCompetitions]: %v", err)
+			continue
+		}
 
 		if competition.Id != competitionId {
 			seasons := make([]domain.Season, 0)
@@ -130,6 +140,7 @@ func (cr *CompetitionRepository) GetCompetition(competitionId int, year int) (*d
 		 ORDER BY 1, 2`)
 
 	if err != nil {
+		log.Printf("Error [GetCompetition]: %v - [%v, %v]", err, competitionId, year)
 		return nil, err
 	}
 
@@ -138,7 +149,7 @@ func (cr *CompetitionRepository) GetCompetition(competitionId int, year int) (*d
 	rows, err := stmt.Query(competitionId, year)
 
 	if err != nil {
-		log.Fatalf("Error: %v - [%v, %v]", err, competitionId, year)
+		log.Printf("Error [GetCompetition]: %v - [%v, %v]", err, competitionId, year)
 		return nil, err
 	}
 
@@ -149,7 +160,12 @@ func (cr *CompetitionRepository) GetCompetition(competitionId int, year int) (*d
 
 	for rows.Next() {
 		season := domain.Season{}
-		rows.Scan(&competitionId, &competitionName, &season.Year, &season.Ended)
+		err = rows.Scan(&competitionId, &competitionName, &season.Year, &season.Ended)
+
+		if err != nil {
+			log.Printf("Error [GetCompetition]: %v", err)
+			continue
+		}
 
 		seasons := make([]domain.Season, 0)
 		competition = domain.Competition{

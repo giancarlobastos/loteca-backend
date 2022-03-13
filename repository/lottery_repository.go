@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"log"
 
@@ -44,19 +45,31 @@ func (lr *LotteryRepository) GetLottery(number int) (*view.Lottery, error) {
 }
 
 func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lottery, error) {
+	tx, err := lr.db.BeginTx(context.Background(), nil)
+
+	if err !=nil {
+		log.Printf("Error [CreateLottery]: %v", err)
+		return nil, err
+	}
+
+	defer tx.Rollback()
+
 	stmt, err := lr.db.Prepare(
 		`INSERT IGNORE INTO lottery(id, name, number, estimated_prize, main_prize, special_prize, accumulated, end_at)
 		 VALUES(?, ?, ?, ?, ?, ?, ?, ?)`)
 
 	if err != nil {
+		log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Id)
 		return nil, err
 	}
+	
 	defer stmt.Close()
 
 	matchStmt, err := lr.db.Prepare(
 		`INSERT IGNORE INTO lottery_match(lottery_id, match_id,` + " `order`) " + `VALUES (?, ?, ?)`)
 
 	if err != nil {
+		log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Id)
 		return nil, err
 	}
 
@@ -65,7 +78,7 @@ func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lott
 	_, err = stmt.Exec(lottery.Number, lottery.Name, lottery.Number, lottery.EstimatedPrize, lottery.MainPrize, lottery.SpecialPrize, lottery.Accumulated, lottery.EndAt)
 
 	if err != nil {
-		log.Fatalf("Error: %v - [%v, %v, %v, %v, %v, %v, %v]", err, lottery.Name, lottery.Number, lottery.EstimatedPrize, lottery.MainPrize, lottery.SpecialPrize, lottery.Accumulated, lottery.EndAt)
+		log.Printf("Error [CreateLottery]: %v - [%v, %v, %v, %v, %v, %v, %v]", err, lottery.Name, lottery.Number, lottery.EstimatedPrize, lottery.MainPrize, lottery.SpecialPrize, lottery.Accumulated, lottery.EndAt)
 		return nil, err
 	}
 
@@ -73,18 +86,20 @@ func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lott
 		_, err = matchStmt.Exec(lottery.Number, match.Id, match.Order)
 
 		if err != nil {
-			log.Fatalf("Error: %v - [%v, %v, %v]", err, lottery.Number, match.Id, match.Order)
+			log.Printf("Error [CreateLottery]: %v - [%v, %v, %v]", err, lottery.Number, match.Id, match.Order)
 			return nil, err
 		}
 	}
 
-	return &lottery, nil
+	err = tx.Commit()
+	return &lottery, err
 }
 
 func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*view.Lottery, error) {
 	stmt, err := lr.db.Prepare(query)
 
 	if err != nil {
+		log.Printf("Error [getLottery]: %v - [%v %v]", err, query, args)
 		return nil, err
 	}
 
@@ -99,7 +114,7 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 	}
 
 	if err != nil {
-		log.Fatalf("Error: %v - Could not get lottery number %v", err, args)
+		log.Printf("Error [getLottery]: %v - Could not get lottery number %v", err, args)
 		return nil, err
 	}
 
@@ -108,8 +123,13 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 	lottery := view.Lottery{}
 
 	if rows.Next() {
-		rows.Scan(&lottery.Id, &lottery.Number, &lottery.EstimatedPrize, &lottery.MainPrize, &lottery.MainPrizeWinners,
+		err = rows.Scan(&lottery.Id, &lottery.Number, &lottery.EstimatedPrize, &lottery.MainPrize, &lottery.MainPrizeWinners,
 			&lottery.SidePrize, &lottery.SidePrizeWinners, &lottery.SpecialPrize, &lottery.Accumulated, &lottery.EndAt)
+
+		if err != nil {
+			log.Printf("Error [GetCompetition]: %v", err)
+			return nil, err
+		}
 	}
 
 	lottery.Matches, _ = lr.matchRepository.GetLotteryMatches(lottery.Id)

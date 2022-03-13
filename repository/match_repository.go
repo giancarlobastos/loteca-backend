@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"time"
@@ -20,12 +21,22 @@ func NewMatchRepository(db *sql.DB) *MatchRepository {
 }
 
 func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, rounds *[]domain.Round) error {
+	tx, err := mr.db.BeginTx(context.Background(), nil)
+
+	if err !=nil {
+		log.Printf("Error [CreateLottery]: %v", err)
+		return err
+	}
+
+	defer tx.Rollback()
+
 	stmt, err := mr.db.Prepare(
 		`INSERT INTO ` + "`match`" + `(id, round_id, home_id, away_id, stadium_id, start_at, home_score, away_score)
 		 VALUES(?, (SELECT r.id FROM round r WHERE r.name = ? AND r.competition_id = ? AND r.year = ?), ?, ?, ?, ?, ?, ?)
 		 ON DUPLICATE KEY UPDATE round_id = VALUES(round_id), start_at = VALUES(start_at), home_score = VALUES(home_score), away_score = VALUES(away_score), stadium_id = VALUES(stadium_id) `)
 
 	if err != nil {
+		log.Printf("Error [InsertRoundsAndMatches]: %v - [%v %v]", err, competitionId, year)
 		return err
 	}
 	defer stmt.Close()
@@ -35,6 +46,7 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, r
 		 VALUES (?, ?, ?, ?)`)
 
 	if err != nil {
+		log.Printf("Error [InsertRoundsAndMatches]: %v - [%v %v]", err, competitionId, year)
 		return err
 	}
 
@@ -44,7 +56,7 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, r
 		_, err = roundStmt.Exec(round.Name, false, competitionId, year)
 
 		if err != nil {
-			log.Fatalf("Error: %v - [%v, %v, %v, %v]", err, round.Name, false, competitionId, year)
+			log.Printf("Error [InsertRoundsAndMatches]: %v - [%v, %v, %v, %v]", err, round.Name, false, competitionId, year)
 			return err
 		}
 
@@ -52,20 +64,21 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, r
 			_, err = stmt.Exec(match.Id, round.Name, competitionId, year, match.Home.Id, match.Away.Id, match.Stadium.Id, match.StartAt, match.HomeScore, match.AwayScore)
 
 			if err != nil {
-				log.Fatalf("Error: %v - [%v, %v, %v, %v, %v, %v, %v, %v]", err, match.Id, round.Name, match.Home.Id, match.Away.Id, match.Stadium, match.StartAt, match.HomeScore, match.AwayScore)
+				log.Printf("Error [InsertRoundsAndMatches]: %v - [%v, %v, %v, %v, %v, %v, %v, %v]", err, match.Id, round.Name, match.Home.Id, match.Away.Id, match.Stadium, match.StartAt, match.HomeScore, match.AwayScore)
 				return err
 			}
 		}
 	}
-
-	return nil
+	
+	err = tx.Commit()
+	return err
 }
 
 func (mr *MatchRepository) GetH2HMatches(homeId int, awayId int, before time.Time) (*[]view.Match, error) {
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
 			m.start_at, m.home_score, m.away_score
-		 FROM` + " `match` " + `m
+		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
 		 JOIN team t1 ON m.home_id = t1.id
@@ -80,7 +93,7 @@ func (mr *MatchRepository) GetLastMatches(teamId int, before time.Time) (*[]view
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
 				m.start_at, m.home_score, m.away_score
-		 FROM` + " `match` " + `m
+		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
 		 JOIN team t1 ON m.home_id = t1.id
@@ -95,7 +108,7 @@ func (mr *MatchRepository) GetNextMatches(teamId int, after time.Time) (*[]view.
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
 			m.start_at, m.home_score, m.away_score
-		 FROM` + " `match` " + `m
+		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
 		 JOIN team t1 ON m.home_id = t1.id
@@ -110,7 +123,7 @@ func (mr *MatchRepository) GetLastCompetitionMatches(competitionId int, year int
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
 				m.start_at, m.home_score, m.away_score
-		 FROM` + " `match` " + `m
+		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
 		 JOIN team t1 ON m.home_id = t1.id
@@ -125,7 +138,7 @@ func (mr *MatchRepository) GetNextCompetitionMatches(competitionId int, year int
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
 			m.start_at, m.home_score, m.away_score
-		 FROM` + " `match` " + `m
+		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
 		 JOIN team t1 ON m.home_id = t1.id
@@ -140,7 +153,7 @@ func (mr *MatchRepository) GetMatches(competitionId int, year int) (*[]view.Matc
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
 		 	m.start_at, m.home_score, m.away_score
-		 FROM` + " `match` " + `m
+		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
 		 JOIN team t1 ON m.home_id = t1.id
@@ -155,7 +168,7 @@ func (mr *MatchRepository) GetLotteryMatches(lotteryId int) (*[]view.Match, erro
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
 		 	m.start_at, m.home_score, m.away_score, lm.order
 		 FROM lottery_match lm
-		 JOIN` + " `match` " + `m ON  lm.match_id = m.id
+		 JOIN`+" `match` "+`m ON  lm.match_id = m.id
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
 		 JOIN team t1 ON m.home_id = t1.id
@@ -171,6 +184,7 @@ func (mr *MatchRepository) getMatches(query string, args ...interface{}) (*[]vie
 	matches := make([]view.Match, 0)
 
 	if err != nil {
+		log.Printf("Error [getMatches]: %v - [%v %v]", err, query, args)
 		return &matches, err
 	}
 
@@ -179,7 +193,7 @@ func (mr *MatchRepository) getMatches(query string, args ...interface{}) (*[]vie
 	rows, err := stmt.Query(args)
 
 	if err != nil {
-		log.Fatalf("Error: %v - [%v]", err, args)
+		log.Printf("Error [getMatches]: %v - [%v]", err, args)
 		return &matches, err
 	}
 
@@ -195,6 +209,7 @@ func (mr *MatchRepository) getMatches(query string, args ...interface{}) (*[]vie
 
 		if err != nil {
 			log.Printf("Error: %v", err)
+			continue
 		}
 
 		matches = append(matches, match)

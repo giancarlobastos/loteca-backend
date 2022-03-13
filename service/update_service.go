@@ -49,7 +49,7 @@ func (us *UpdateService) getTeams(country string) (*[]domain.Team, error) {
 	response, err := us.apiClient.GetTeams(country)
 
 	if err != nil {
-		log.Fatalf("Error [getTeams]: %v - [%v]", err, country)
+		log.Printf("Error [getTeams]: %v - [%v]", err, country)
 		return &[]domain.Team{}, err
 	}
 
@@ -90,7 +90,7 @@ func (us *UpdateService) getCompetitions(country string) (*[]domain.Competition,
 	response, err := us.apiClient.GetLeagues(country)
 
 	if err != nil {
-		log.Fatalf("Error [getCompetitions]: %v - [%v]", err, country)
+		log.Printf("Error [getCompetitions]: %v - [%v]", err, country)
 		return &[]domain.Competition{}, err
 	}
 
@@ -149,14 +149,89 @@ func (us *UpdateService) ImportMatches(competitionId int, year int) error {
 }
 
 func (us *UpdateService) ImportHeadToHead(homeId int, awayId int) error {
-	competitions, err := us.getHeadToHead(homeId, awayId)
+	response, err := us.apiClient.GetHeadToHead(homeId, awayId)
+
+	if err != nil {
+		log.Printf("Error [ImportHeadToHead]: %v - [%v, %v]", err, homeId, awayId)
+	}
+
+	competitions, err := us.getCompetitionAndMatches(response)
+
+	if err != nil {
+		log.Printf("Error [ImportHeadToHead]: %v - [%v, %v]", err, homeId, awayId)
+		return err
+	}
+
+	return us.saveCompetitionAndMatches(competitions)
+}
+
+func (us *UpdateService) ImportLastMatches(teamId int) error {
+	response, err := us.apiClient.GetLastFixtures(teamId, 6)
+
+	if err != nil {
+		log.Printf("Error [ImportLastMatches]: %v - [%v]", err, teamId)
+	}
+
+	competitions, err := us.getCompetitionAndMatches(response)
 
 	if err != nil {
 		return err
 	}
 
+	return us.saveCompetitionAndMatches(competitions)
+}
+
+func (us *UpdateService) ImportLastCompetitionMatches(competitionId int, year int, teamId int) error {
+	response, err := us.apiClient.GetLastCompetitionFixtures(competitionId, year, teamId, 6)
+
+	if err != nil {
+		log.Printf("Error [ImportLastCompetitionMatches]: %v - [%v, %v, %v]", err, competitionId, year, teamId)
+	}
+
+	competitions, err := us.getCompetitionAndMatches(response)
+
+	if err != nil {
+		return err
+	}
+
+	return us.saveCompetitionAndMatches(competitions)
+}
+
+func (us *UpdateService) ImportNextMatches(teamId int) error {
+	response, err := us.apiClient.GetNextFixtures(teamId, 6)
+
+	if err != nil {
+		log.Printf("Error [ImportNextMatches]: %v - [%v]", err, teamId)
+	}
+
+	competitions, err := us.getCompetitionAndMatches(response)
+
+	if err != nil {
+		return err
+	}
+
+	return us.saveCompetitionAndMatches(competitions)
+}
+
+func (us *UpdateService) ImportNextCompetitionMatches(competitionId int, year int, teamId int) error {
+	response, err := us.apiClient.GetNextCompetitionFixtures(competitionId, year, teamId, 6)
+
+	if err != nil {
+		log.Printf("Error [ImportLastCompetitionMatches]: %v - [%v, %v, %v]", err, competitionId, year, teamId)
+	}
+
+	competitions, err := us.getCompetitionAndMatches(response)
+
+	if err != nil {
+		return err
+	}
+
+	return us.saveCompetitionAndMatches(competitions)
+}
+
+func (us *UpdateService) saveCompetitionAndMatches(competitions *[]domain.Competition) error {
 	for _, competition := range *competitions {
-		err = us.competitionRepository.InsertCompetitions(&([]domain.Competition{competition}))
+		err := us.competitionRepository.InsertCompetitions(&([]domain.Competition{competition}))
 
 		if err != nil {
 			return err
@@ -173,21 +248,14 @@ func (us *UpdateService) ImportHeadToHead(homeId int, awayId int) error {
 	return nil
 }
 
-func (us *UpdateService) getHeadToHead(homeId int, awayId int) (*[]domain.Competition, error) {
-	response, err := us.apiClient.GetHeadToHead(homeId, awayId)
-
-	if err != nil {
-		log.Fatalf("Error [getHeadToHead]: %v - [%v, %v]", err, homeId, awayId)
-		return &[]domain.Competition{}, err
-	}
-
+func (us *UpdateService) getCompetitionAndMatches(fixtures *client.GetFixtureResponse) (*[]domain.Competition, error) {
 	competitions := make([]domain.Competition, 0)
 
-	for _, result := range response.Results {
+	for _, result := range fixtures.Results {
 		startAt, err := time.Parse(time.RFC3339, result.Fixture.DateAndTime)
 
 		if err != nil {
-			log.Fatalf("Error [getHeadToHead]: %v - [%v, %v, %v]", err, result.League.Id, result.League.Season, result.Fixture.DateAndTime)
+			log.Printf("Error [getHeadToHead]: %v - [%v, %v, %v]", err, result.League.Id, result.League.Season, result.Fixture.DateAndTime)
 		}
 
 		match := domain.Match{
@@ -233,7 +301,7 @@ func (us *UpdateService) getRoundsWithMatches(competitionId int, year int) (*[]d
 	response, err := us.apiClient.GetFixtures(competitionId, year)
 
 	if err != nil {
-		log.Fatalf("Error [getRoundsWithMatches]: %v - [%v, %v]", err, competitionId, year)
+		log.Printf("Error [getRoundsWithMatches]: %v - [%v, %v]", err, competitionId, year)
 		return &[]domain.Round{}, err
 	}
 
@@ -258,7 +326,8 @@ func (us *UpdateService) getRoundsWithMatches(competitionId int, year int) (*[]d
 		startAt, err := time.Parse(time.RFC3339, result.Fixture.DateAndTime)
 
 		if err != nil {
-			log.Fatalf("Error [getRoundsWithMatches]: %v - [%v, %v, %v]", err, result.League.Id, result.League.Season, result.Fixture.DateAndTime)
+			log.Printf("Error [getRoundsWithMatches]: %v - [%v, %v, %v]", err, result.League.Id, result.League.Season, result.Fixture.DateAndTime)
+			continue
 		}
 
 		match := domain.Match{

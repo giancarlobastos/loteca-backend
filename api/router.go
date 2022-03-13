@@ -34,7 +34,6 @@ func (router *Router) Start(addr string) {
 	r.HandleFunc("/manager/{country}/competitions/{competitionId}/{year}/matches", router.getMatches).Methods("GET")
 	r.HandleFunc("/manager/{country}/competitions", router.importCompetitions).Methods("POST")
 	r.HandleFunc("/manager/{country}/competitions/{competitionId}/{year}/matches", router.importMatches).Methods("POST")
-	r.HandleFunc("/manager/h2h/{homeId}/{awayId}", router.importHeadToHead).Methods("POST")
 	r.HandleFunc("/manager/lotteries", router.createLottery).Methods("POST")
 	log.Fatal(http.ListenAndServe(addr, r))
 }
@@ -155,20 +154,6 @@ func (router *Router) importMatches(w http.ResponseWriter, r *http.Request) {
 	competitionId, _ := strconv.Atoi(vars["competitionId"])
 	year, _ := strconv.Atoi(vars["year"])
 	err := router.updateService.ImportMatches(competitionId, year)
-
-	if err != nil {
-		respondWithError(w, http.StatusNotFound, err.Error())
-		return
-	}
-
-	respondWithJSON(w, http.StatusOK, nil)
-}
-
-func (router *Router) importHeadToHead(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	homeId, _ := strconv.Atoi(vars["homeId"])
-	awayId, _ := strconv.Atoi(vars["awayId"])
-	err := router.updateService.ImportHeadToHead(homeId, awayId)
 
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, err.Error())
