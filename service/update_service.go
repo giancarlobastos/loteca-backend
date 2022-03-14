@@ -162,7 +162,7 @@ func (us *UpdateService) ImportHeadToHead(homeId int, awayId int) error {
 		return err
 	}
 
-	return us.saveCompetitionAndMatches(competitions)
+	return us.insertCompetitionAndMatches(competitions)
 }
 
 func (us *UpdateService) ImportLastMatches(teamId int) error {
@@ -178,7 +178,7 @@ func (us *UpdateService) ImportLastMatches(teamId int) error {
 		return err
 	}
 
-	return us.saveCompetitionAndMatches(competitions)
+	return us.insertCompetitionAndMatches(competitions)
 }
 
 func (us *UpdateService) ImportLastCompetitionMatches(competitionId int, year int, teamId int) error {
@@ -194,7 +194,7 @@ func (us *UpdateService) ImportLastCompetitionMatches(competitionId int, year in
 		return err
 	}
 
-	return us.saveCompetitionAndMatches(competitions)
+	return us.insertCompetitionAndMatches(competitions)
 }
 
 func (us *UpdateService) ImportNextMatches(teamId int) error {
@@ -210,7 +210,7 @@ func (us *UpdateService) ImportNextMatches(teamId int) error {
 		return err
 	}
 
-	return us.saveCompetitionAndMatches(competitions)
+	return us.insertCompetitionAndMatches(competitions)
 }
 
 func (us *UpdateService) ImportNextCompetitionMatches(competitionId int, year int, teamId int) error {
@@ -226,10 +226,10 @@ func (us *UpdateService) ImportNextCompetitionMatches(competitionId int, year in
 		return err
 	}
 
-	return us.saveCompetitionAndMatches(competitions)
+	return us.insertCompetitionAndMatches(competitions)
 }
 
-func (us *UpdateService) saveCompetitionAndMatches(competitions *[]domain.Competition) error {
+func (us *UpdateService) insertCompetitionAndMatches(competitions *[]domain.Competition) error {
 	for _, competition := range *competitions {
 		err := us.competitionRepository.InsertCompetitions(&([]domain.Competition{competition}))
 
@@ -248,7 +248,7 @@ func (us *UpdateService) saveCompetitionAndMatches(competitions *[]domain.Compet
 	return nil
 }
 
-func (us *UpdateService) getCompetitionAndMatches(fixtures *client.GetFixtureResponse) (*[]domain.Competition, error) {
+func (us *UpdateService) getCompetitionAndMatches(fixtures *client.GetFixturesResponse) (*[]domain.Competition, error) {
 	competitions := make([]domain.Competition, 0)
 
 	for _, result := range fixtures.Results {

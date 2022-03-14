@@ -102,15 +102,17 @@ CREATE TABLE `lottery_poll` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `betting_platform` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `id` int PRIMARY KEY,
   `name` varchar(255),
   `url` varchar(255)
+  `preference` int
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `match_odds` (
   `platform_id` int,
   `match_id` int,
   `home_odds` double,
+  `draw_odds` double,
   `away_odds` double,
   `updated_at` timestamp,
   PRIMARY KEY (`platform_id`, `match_id`)

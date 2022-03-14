@@ -8,19 +8,24 @@ type Response struct {
 	Paging     Paging            `json:"paging"`
 }
 
-type GetTeamResponse struct {
+type GetTeamsResponse struct {
 	Response
 	Results []TeamResult `json:"response"`
 }
 
-type GetLeagueResponse struct {
+type GetLeaguesResponse struct {
 	Response
 	Results []LeagueResult `json:"response"`
 }
 
-type GetFixtureResponse struct {
+type GetFixturesResponse struct {
 	Response
 	Results []FixtureResult `json:"response"`
+}
+
+type GetOddsResponse struct {
+	Response
+	Results []OddsResult `json:"response"`
 }
 
 type Paging struct {
@@ -157,4 +162,28 @@ type FixtureTeam struct {
 	Name    string `json:"name"`
 	LogoUrl string `json:"logo"`
 	Winner  bool   `json:"winner"`
+}
+
+type OddsResult struct {
+	Fixture     Fixture       `json:"fixture"`
+	League      FixtureLeague `json:"league"`
+	DateAndTime string        `json:"update"`
+	Bookmakers  []Bookmaker   `json:"bookmakers"`
+}
+
+type Bookmaker struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+	Bets []Bet  `json:"bets"`
+}
+
+type Bet struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+	Odds []Odd  `json:"values"`
+}
+
+type Odd struct {
+	Name  string  `json:"value"`
+	Value float32 `json:"odd"`
 }

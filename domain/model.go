@@ -82,3 +82,18 @@ type Lottery struct {
 	EndAt            *time.Time `json:",omitempty"`
 	Matches          *[]Match   `json:",omitempty"`
 }
+
+type Bookmaker struct {
+	Id   int    `json:",omitempty"`
+	Name string `json:",omitempty"`
+	Url  string `json:",omitempty"`
+}
+
+type Odd struct {
+	Id        int        `json:",omitempty"`
+	Bookmaker Bookmaker  `json:",omitempty"`
+	Home      float32    `json:",omitempty"`
+	Draw      float32    `json:",omitempty"`
+	Away      float32    `json:",omitempty"`
+	UpdatedAt *time.Time `json:",omitempty"`
+}
