@@ -77,7 +77,7 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, r
 func (mr *MatchRepository) GetH2HMatches(homeId int, awayId int, before time.Time) (*[]view.Match, error) {
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
-			m.start_at, m.home_score, m.away_score
+			m.start_at, m.home_score, m.away_score, NULL
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -92,7 +92,7 @@ func (mr *MatchRepository) GetH2HMatches(homeId int, awayId int, before time.Tim
 func (mr *MatchRepository) GetLastMatches(teamId int, before time.Time) (*[]view.Match, error) {
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
-				m.start_at, m.home_score, m.away_score
+				m.start_at, m.home_score, m.away_score, NULL
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -107,7 +107,7 @@ func (mr *MatchRepository) GetLastMatches(teamId int, before time.Time) (*[]view
 func (mr *MatchRepository) GetNextMatches(teamId int, after time.Time) (*[]view.Match, error) {
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
-			m.start_at, m.home_score, m.away_score
+			m.start_at, m.home_score, m.away_score, NULL
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -122,7 +122,7 @@ func (mr *MatchRepository) GetNextMatches(teamId int, after time.Time) (*[]view.
 func (mr *MatchRepository) GetLastCompetitionMatches(competitionId int, year int, teamId int, before time.Time) (*[]view.Match, error) {
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
-				m.start_at, m.home_score, m.away_score
+				m.start_at, m.home_score, m.away_score, NULL
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -137,7 +137,7 @@ func (mr *MatchRepository) GetLastCompetitionMatches(competitionId int, year int
 func (mr *MatchRepository) GetNextCompetitionMatches(competitionId int, year int, teamId int, after time.Time) (*[]view.Match, error) {
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
-			m.start_at, m.home_score, m.away_score
+			m.start_at, m.home_score, m.away_score, NULL
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -152,7 +152,7 @@ func (mr *MatchRepository) GetNextCompetitionMatches(competitionId int, year int
 func (mr *MatchRepository) GetMatches(competitionId int, year int) (*[]view.Match, error) {
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t2.id, t2.name, s.name, 
-		 	m.start_at, m.home_score, m.away_score
+		 	m.start_at, m.home_score, m.away_score, NULL
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -190,7 +190,7 @@ func (mr *MatchRepository) getMatches(query string, args ...interface{}) (*[]vie
 
 	defer stmt.Close()
 
-	rows, err := stmt.Query(args)
+	rows, err := stmt.Query(args...)
 
 	if err != nil {
 		log.Printf("Error [getMatches]: %v - [%v]", err, args)
@@ -205,7 +205,7 @@ func (mr *MatchRepository) getMatches(query string, args ...interface{}) (*[]vie
 		match = view.Match{}
 		err = rows.Scan(&match.Id, &match.RoundNumber, &match.RoundName, &match.Year, &match.CompetitionId, &match.CompetitionName,
 			&match.HomeId, &match.HomeName, &match.AwayId, &match.AwayName, &match.Stadium,
-			&match.StartAt, &match.HomeScore, &match.AwayScore)
+			&match.StartAt, &match.HomeScore, &match.AwayScore, &match.Order)
 
 		if err != nil {
 			log.Printf("Error: %v", err)

@@ -2,7 +2,7 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
+	// "errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -90,8 +90,10 @@ func (c *ApiFootballClient) GetOdds(matchId int) (oddsResponse *GetOddsResponse,
 
 func (c *ApiFootballClient) callApi(url string, params *map[string]string) ([]byte, error) {
 	log.Printf("[%s]: %v", url, params)
+	
 	if c.remainingRequestCount <= 0 {
-		return make([]byte, 0), errors.New("no remaining calls to ApiFootball")
+		log.Printf("no remaining calls to ApiFootball [%v]", c.remainingRequestCount)
+		// return make([]byte, 0), errors.New("no remaining calls to ApiFootball")
 	}
 
 	req, _ := http.NewRequest("GET", url, nil)

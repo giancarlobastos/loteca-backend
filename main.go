@@ -33,10 +33,11 @@ func init() {
 	competitionRepository := repository.NewCompetitionRepository(database)
 	matchRepository := repository.NewMatchRepository(database)
 	lotteryRepository := repository.NewLotteryRepository(database, matchRepository)
+	bookmakerRepository := repository.NewBookmakerRepository(database)
 
 	apiClient := client.NewApiFootballClient()
 
-	updateService := service.NewUpdateService(teamRepository, competitionRepository, matchRepository, apiClient)
+	updateService := service.NewUpdateService(teamRepository, competitionRepository, matchRepository, bookmakerRepository, apiClient)
 	apiService := service.NewApiService(lotteryRepository, updateService)
 
 	router = api.NewRouter(apiService, updateService)

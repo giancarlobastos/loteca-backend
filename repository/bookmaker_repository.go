@@ -52,7 +52,11 @@ func (br *BookmakerRepository) InsertOdds(odds *[]domain.Odd) error {
 		}
 
 		_, err = oddsStmt.Exec(odd.Bookmaker.Id, odd.Id, odd.Home, odd.Draw, odd.Away, *odd.UpdatedAt)
-		log.Printf("Error [InsertOdds]: %v - [%v %v %v %v %v %v]", err, odd.Bookmaker.Id, odd.Id, odd.Home, odd.Draw, odd.Away, *odd.UpdatedAt)
+
+		if err != nil {
+			log.Printf("Error [InsertOdds]: %v - [%v %v %v %v %v %v]", err, odd.Bookmaker.Id, odd.Id, odd.Home, odd.Draw, odd.Away, *odd.UpdatedAt)
+			continue
+		}
 	}
 
 	return nil

@@ -165,10 +165,10 @@ type FixtureTeam struct {
 }
 
 type OddsResult struct {
-	Fixture     Fixture       `json:"fixture"`
-	League      FixtureLeague `json:"league"`
-	DateAndTime string        `json:"update"`
-	Bookmakers  []Bookmaker   `json:"bookmakers"`
+	Fixture    Fixture       `json:"fixture"`
+	League     FixtureLeague `json:"league"`
+	UpdatedAt  string        `json:"update"`
+	Bookmakers []Bookmaker   `json:"bookmakers"`
 }
 
 type Bookmaker struct {
@@ -184,6 +184,6 @@ type Bet struct {
 }
 
 type Odd struct {
-	Name  string  `json:"value"`
-	Value float32 `json:"odd"`
+	Name  string `json:"value"`
+	Value string `json:"odd"`
 }

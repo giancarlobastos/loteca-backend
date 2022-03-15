@@ -15,6 +15,7 @@ type UpdateService struct {
 	teamRepository        *repository.TeamRepository
 	competitionRepository *repository.CompetitionRepository
 	matchRepository       *repository.MatchRepository
+	bookmakerRepository   *repository.BookmakerRepository
 	apiClient             *client.ApiFootballClient
 }
 
@@ -22,11 +23,13 @@ func NewUpdateService(
 	teamRepository *repository.TeamRepository,
 	competitionRepository *repository.CompetitionRepository,
 	matchRepository *repository.MatchRepository,
+	bookmakerRepository *repository.BookmakerRepository,
 	apiClient *client.ApiFootballClient) *UpdateService {
 	return &UpdateService{
 		teamRepository:        teamRepository,
 		competitionRepository: competitionRepository,
 		matchRepository:       matchRepository,
+		bookmakerRepository:   bookmakerRepository,
 		apiClient:             apiClient,
 	}
 }
@@ -229,18 +232,84 @@ func (us *UpdateService) ImportNextCompetitionMatches(competitionId int, year in
 	return us.insertCompetitionAndMatches(competitions)
 }
 
+func (us *UpdateService) ImportOdds(matchId int) error {
+	response, err := us.apiClient.GetOdds(matchId)
+
+	if err != nil {
+		log.Printf("Error [ImportOdds]: %v - [%v]", err, matchId)
+		return err
+	}
+
+	odds := make([]domain.Odd, 0)
+	result := response.Results[0]
+	updatedAt, err := time.Parse(time.RFC3339, result.UpdatedAt)
+
+	if err != nil {
+		log.Printf("Error [ImportOdds]: %v - [%v, %v]", err, matchId, result.UpdatedAt)
+		return err
+	}
+
+	for _, bookmaker := range result.Bookmakers {
+		odd := domain.Odd{
+			Id: result.Fixture.Id,
+			Bookmaker: domain.Bookmaker{
+				Id:   bookmaker.Id,
+				Name: bookmaker.Name,
+			},
+			Home:      us.getOdd(bookmaker.Bets[0], "Home"),
+			Draw:      us.getOdd(bookmaker.Bets[0], "Draw"),
+			Away:      us.getOdd(bookmaker.Bets[0], "Away"),
+			UpdatedAt: &updatedAt,
+		}
+
+		odds = append(odds, odd)
+	}
+
+	return us.bookmakerRepository.InsertOdds(&odds)
+}
+
+func (us *UpdateService) getOdd(bet client.Bet, name string) float32 {
+	for _, odd := range bet.Odds {
+		if odd.Name == name {
+			value, _ := strconv.ParseFloat(odd.Value, 32)
+			return float32(value) 
+		}
+	}
+
+	return 0
+}
+
 func (us *UpdateService) insertCompetitionAndMatches(competitions *[]domain.Competition) error {
 	for _, competition := range *competitions {
 		err := us.competitionRepository.InsertCompetitions(&([]domain.Competition{competition}))
 
 		if err != nil {
+			log.Printf("Error [insertCompetitionAndMatches.InsertCompetitions]: %v - [%v]", err, competition)
 			return err
 		}
 
 		seasons := *competition.Seasons
+		rounds := *seasons[0].Rounds
+		matches := *rounds[0].Matches
+
+		err = us.teamRepository.InsertTeams(&[]domain.Team{*matches[0].Home, *matches[0].Away})
+
+		if err != nil {
+			log.Printf("Error [insertCompetitionAndMatches.InsertTeams]: %v", err)
+			return err
+		}
+
+		err = us.teamRepository.InsertStadium(matches[0].Stadium)
+
+		if err != nil {
+			log.Printf("Error [insertCompetitionAndMatches.InsertStadium]: %v - [%v]", err, (*matches[0].Stadium).Id)
+			return err
+		}
+
 		err = us.matchRepository.InsertRoundsAndMatches(competition.Id, seasons[0].Year, seasons[0].Rounds)
 
 		if err != nil {
+			log.Printf("Error [insertCompetitionAndMatches.InsertRoundsAndMatches]: %v - [%v]", err, competition)
 			return err
 		}
 	}
@@ -256,19 +325,27 @@ func (us *UpdateService) getCompetitionAndMatches(fixtures *client.GetFixturesRe
 
 		if err != nil {
 			log.Printf("Error [getHeadToHead]: %v - [%v, %v, %v]", err, result.League.Id, result.League.Season, result.Fixture.DateAndTime)
+			continue
 		}
 
 		match := domain.Match{
 			Id: result.Fixture.Id,
 			Home: &domain.Team{
 				Id: result.Teams.Home.Id,
+				Name: result.Teams.Home.Name,
+				Logo: result.Teams.Home.LogoUrl,
+				Stadium: &domain.Stadium{},
 			},
 			Away: &domain.Team{
 				Id: result.Teams.Away.Id,
+				Name: result.Teams.Away.Name,
+				Logo: result.Teams.Away.LogoUrl,
+				Stadium: &domain.Stadium{},
 			},
 			Stadium: &domain.Stadium{
 				Id:   result.Fixture.Venue.Id,
 				Name: result.Fixture.Venue.Name,
+				City: result.Fixture.Venue.City,
 			},
 			StartAt:   startAt,
 			HomeScore: result.Goals.Home,

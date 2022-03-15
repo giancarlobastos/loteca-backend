@@ -41,7 +41,7 @@ func (lr *LotteryRepository) GetLottery(number int) (*view.Lottery, error) {
 	     FROM lottery 
 		 WHERE number = ?`
 
-	return lr.getLottery(query, &number)
+	return lr.getLottery(query, number)
 }
 
 func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lottery, error) {
@@ -59,7 +59,7 @@ func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lott
 		 VALUES(?, ?, ?, ?, ?, ?, ?, ?)`)
 
 	if err != nil {
-		log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Id)
+		log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Number)
 		return nil, err
 	}
 	
@@ -69,7 +69,7 @@ func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lott
 		`INSERT IGNORE INTO lottery_match(lottery_id, match_id,` + " `order`) " + `VALUES (?, ?, ?)`)
 
 	if err != nil {
-		log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Id)
+		log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Number)
 		return nil, err
 	}
 
@@ -110,7 +110,7 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 	if len(args) == 0 {
 		rows, err = stmt.Query()
 	} else {
-		rows, err = stmt.Query(args)
+		rows, err = stmt.Query(args...)
 	}
 
 	if err != nil {
@@ -132,7 +132,7 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 		}
 	}
 
-	lottery.Matches, _ = lr.matchRepository.GetLotteryMatches(lottery.Id)
+	lottery.Matches, _ = lr.matchRepository.GetLotteryMatches(*lottery.Id)
 
 	return &lottery, err
 }

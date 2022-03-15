@@ -5,16 +5,16 @@ import (
 )
 
 type Lottery struct {
-	Id               int        `json:",omitempty"`
-	Number           int        `json:",omitempty"`
-	Name             string     `json:",omitempty"`
-	EstimatedPrize   float32    `json:",omitempty"`
-	MainPrize        float32    `json:",omitempty"`
-	MainPrizeWinners int        `json:",omitempty"`
-	SidePrize        float32    `json:",omitempty"`
-	SidePrizeWinners int        `json:",omitempty"`
-	SpecialPrize     float32    `json:",omitempty"`
-	Accumulated      bool       `json:",omitempty"`
+	Id               *int        `json:",omitempty"`
+	Number           *int        `json:",omitempty"`
+	Name             *string     `json:",omitempty"`
+	EstimatedPrize   *float32    `json:",omitempty"`
+	MainPrize        *float32    `json:",omitempty"`
+	MainPrizeWinners *int        `json:",omitempty"`
+	SidePrize        *float32    `json:",omitempty"`
+	SidePrizeWinners *int        `json:",omitempty"`
+	SpecialPrize     *float32    `json:",omitempty"`
+	Accumulated      *bool       `json:",omitempty"`
 	EndAt            *time.Time `json:",omitempty"`
 	Matches          *[]Match   `json:",omitempty"`
 }

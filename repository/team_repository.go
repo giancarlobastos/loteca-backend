@@ -23,22 +23,7 @@ func (tr *TeamRepository) InsertTeams(teams *[]domain.Team) error {
 	 	 VALUES(?, ?, ?, ?)
 		 ON DUPLICATE KEY UPDATE 
 			name = coalesce(VALUES(name), name), 
-			logo = coalesce(VALUES(logo), logo)`)
-
-	if err != nil {
-		log.Printf("Error [InsertTeams]: %v", err)
-		return err
-	}
-
-	defer stmt.Close()
-
-	stadiumStmt, err := tr.db.Prepare(
-		`INSERT INTO stadium(id, name, city, state, country)
-		 VALUES(?, ?, ?, ?, ?)
-		 ON DUPLICATE KEY UPDATE 
-			name = coalesce(VALUES(name), name), 
-			city = coalesce(VALUES(city), city), 
-			state = coalesce(VALUES(state), state), 
+			logo = coalesce(VALUES(logo), logo),
 			country = coalesce(VALUES(country), country)`)
 
 	if err != nil {
@@ -46,7 +31,7 @@ func (tr *TeamRepository) InsertTeams(teams *[]domain.Team) error {
 		return err
 	}
 
-	defer stadiumStmt.Close()
+	defer stmt.Close()
 
 	for _, team := range *teams {
 		_, err = stmt.Exec(team.Id, team.Name, team.Logo, team.Country)
@@ -56,9 +41,35 @@ func (tr *TeamRepository) InsertTeams(teams *[]domain.Team) error {
 			continue
 		}
 
-		if (domain.Stadium{}) != *team.Stadium {
-			_, err = stadiumStmt.Exec(team.Stadium.Id, team.Stadium.Name, team.Stadium.City, team.Stadium.State, team.Stadium.Country)
-			log.Printf("Error [InsertTeams]: %v - [%v %v %v %v %v]", err, team.Stadium.Id, team.Stadium.Name, team.Stadium.City, team.Stadium.State, team.Stadium.Country)
+		tr.InsertStadium(team.Stadium)
+	}
+
+	return nil
+}
+
+func (tr *TeamRepository) InsertStadium(stadium *domain.Stadium) error {
+	stmt, err := tr.db.Prepare(
+		`INSERT INTO stadium(id, name, city, state, country)
+		 VALUES(?, ?, ?, ?, ?)
+		 ON DUPLICATE KEY UPDATE 
+			name = coalesce(VALUES(name), name), 
+			city = coalesce(VALUES(city), city), 
+			state = coalesce(VALUES(state), state), 
+			country = coalesce(VALUES(country), country)`)
+
+	if err != nil {
+		log.Printf("Error [InsertStadium]: %v", err)
+		return err
+	}
+
+	defer stmt.Close()
+
+	if (domain.Stadium{}) != *stadium {
+		_, err = stmt.Exec(stadium.Id, stadium.Name, stadium.City, stadium.State, stadium.Country)
+
+		if err != nil {
+			log.Printf("Error [InsertStadium]: %v - [%v %v %v %v %v]", err, stadium.Id, stadium.Name, stadium.City, stadium.State, stadium.Country)
+			return err
 		}
 	}
 

@@ -34,40 +34,55 @@ func (as *ApiService) CreateLottery(lottery domain.Lottery) (*domain.Lottery, er
 	_, err := as.lotteryRepository.CreateLottery(lottery)
 
 	if err != nil {
-		log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Id)
+		log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Number)
 	}
 
-	for _, match := range *lottery.Matches {
-		err = as.updateSerice.ImportHeadToHead(match.Home.Id, match.Away.Id)
+	lotteryVO, err := as.lotteryRepository.GetLottery(lottery.Number)
 
-		if err != nil {
-			log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Id)
-		}
-
-		err = as.updateSerice.ImportLastMatches(match.Home.Id)
-
-		if err != nil {
-			log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Id)
-		}
-
-		err = as.updateSerice.ImportLastMatches(match.Away.Id)
-
-		if err != nil {
-			log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Id)
-		}
-
-		err = as.updateSerice.ImportNextMatches(match.Home.Id)
-
-		if err != nil {
-			log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Id)
-		}
-
-		err = as.updateSerice.ImportNextMatches(match.Away.Id)
-
-		if err != nil {
-			log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Id)
-		}
+	if err != nil {
+		log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Number)
+		return nil, err
 	}
+
+	go func() {
+		for _, match := range *lotteryVO.Matches {
+			err = as.updateSerice.ImportHeadToHead(*match.HomeId, *match.AwayId)
+
+			if err != nil {
+				log.Printf("Error [CreateLottery.ImportHeadToHead]: %v - [%v %v %v]", err, lottery.Number, *match.HomeId, *match.AwayId)
+			}
+
+			err = as.updateSerice.ImportLastMatches(*match.HomeId)
+
+			if err != nil {
+				log.Printf("Error [CreateLottery.ImportLastMatches]: %v - [%v %v]", err, lottery.Number, *match.HomeId)
+			}
+
+			err = as.updateSerice.ImportLastMatches(*match.AwayId)
+
+			if err != nil {
+				log.Printf("Error [CreateLottery.ImportLastMatches]: %v - [%v %v]", err, lottery.Number, *match.AwayId)
+			}
+
+			err = as.updateSerice.ImportNextMatches(*match.HomeId)
+
+			if err != nil {
+				log.Printf("Error [CreateLottery.ImportNextMatches]: %v - [%v %v]", err, lottery.Number, *match.HomeId)
+			}
+
+			err = as.updateSerice.ImportNextMatches(*match.AwayId)
+
+			if err != nil {
+				log.Printf("Error [CreateLottery.ImportNextMatches]: %v - [%v %v]", err, lottery.Number, *match.AwayId)
+			}
+
+			err = as.updateSerice.ImportOdds(*match.Id)
+
+			if err != nil {
+				log.Printf("Error [CreateLottery.ImportOdds]: %v - [%v %v]", err, lottery.Number, *match.Id)
+			}
+		}
+	}()
 
 	return &lottery, nil
 }
