@@ -241,6 +241,12 @@ func (us *UpdateService) ImportOdds(matchId int) error {
 	}
 
 	odds := make([]domain.Odd, 0)
+
+	if len(response.Results) == 0 {
+		log.Printf("Error [ImportOdds]: has no results - [%v %v]", matchId, response)
+		return nil
+	}
+
 	result := response.Results[0]
 	updatedAt, err := time.Parse(time.RFC3339, result.UpdatedAt)
 
@@ -272,7 +278,7 @@ func (us *UpdateService) getOdd(bet client.Bet, name string) float32 {
 	for _, odd := range bet.Odds {
 		if odd.Name == name {
 			value, _ := strconv.ParseFloat(odd.Value, 32)
-			return float32(value) 
+			return float32(value)
 		}
 	}
 
@@ -331,15 +337,15 @@ func (us *UpdateService) getCompetitionAndMatches(fixtures *client.GetFixturesRe
 		match := domain.Match{
 			Id: result.Fixture.Id,
 			Home: &domain.Team{
-				Id: result.Teams.Home.Id,
-				Name: result.Teams.Home.Name,
-				Logo: result.Teams.Home.LogoUrl,
+				Id:      result.Teams.Home.Id,
+				Name:    result.Teams.Home.Name,
+				Logo:    result.Teams.Home.LogoUrl,
 				Stadium: &domain.Stadium{},
 			},
 			Away: &domain.Team{
-				Id: result.Teams.Away.Id,
-				Name: result.Teams.Away.Name,
-				Logo: result.Teams.Away.LogoUrl,
+				Id:      result.Teams.Away.Id,
+				Name:    result.Teams.Away.Name,
+				Logo:    result.Teams.Away.LogoUrl,
 				Stadium: &domain.Stadium{},
 			},
 			Stadium: &domain.Stadium{
