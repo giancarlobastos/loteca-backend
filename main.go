@@ -34,11 +34,13 @@ func init() {
 	matchRepository := repository.NewMatchRepository(database)
 	lotteryRepository := repository.NewLotteryRepository(database, matchRepository)
 	bookmakerRepository := repository.NewBookmakerRepository(database)
+	userRepository := repository.NewUserRepository(database)
 
 	apiClient := client.NewApiFootballClient()
+	facebookClient := client.NewFacebookClient()
 
 	updateService := service.NewUpdateService(teamRepository, competitionRepository, matchRepository, bookmakerRepository, apiClient)
-	apiService := service.NewApiService(lotteryRepository, updateService)
+	apiService := service.NewApiService(userRepository, lotteryRepository, updateService, facebookClient)
 
 	router = api.NewRouter(apiService, updateService)
 }

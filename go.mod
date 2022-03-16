@@ -16,6 +16,8 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gorilla/mux v1.8.0
+	github.com/huandu/facebook v2.3.1+incompatible // indirect
+	github.com/huandu/facebook/v2 v2.5.5
 	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2 // indirect
 	github.com/nleeper/goment v1.4.2

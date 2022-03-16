@@ -1,24 +1,32 @@
 package service
 
 import (
+	"errors"
 	"log"
 
+	"github.com/giancarlobastos/loteca-backend/client"
 	"github.com/giancarlobastos/loteca-backend/domain"
 	"github.com/giancarlobastos/loteca-backend/repository"
 	"github.com/giancarlobastos/loteca-backend/view"
 )
 
 type ApiService struct {
+	userRepository    *repository.UserRepository
 	lotteryRepository *repository.LotteryRepository
 	updateSerice      *UpdateService
+	facebookClient    *client.FacebookClient
 }
 
 func NewApiService(
+	userRepository *repository.UserRepository,
 	lotteryRepository *repository.LotteryRepository,
-	updateService *UpdateService) *ApiService {
+	updateService *UpdateService,
+	facebookClient *client.FacebookClient) *ApiService {
 	return &ApiService{
+		userRepository:    userRepository,
 		lotteryRepository: lotteryRepository,
 		updateSerice:      updateService,
+		facebookClient:    facebookClient,
 	}
 }
 
@@ -85,4 +93,49 @@ func (as *ApiService) CreateLottery(lottery domain.Lottery) (*domain.Lottery, er
 	}()
 
 	return &lottery, nil
+}
+
+func (as *ApiService) Authenticate(user domain.User, token string) (*domain.User, error) {
+	if !as.validateToken(user.FacebookId, token) {
+		return nil, errors.New("invalid facebook id")
+	}
+
+	if user.Id == nil {
+		authenticatedUser, err := as.userRepository.GetUserByFacebookId(user.FacebookId)
+
+		if err != nil {
+			log.Printf("Error [Authenticate]: %v - [%v]", err, user)
+			return nil, err
+		}
+
+		if authenticatedUser == nil {
+			return as.userRepository.InsertUser(&user)
+		}
+
+		return authenticatedUser, nil
+	} else {
+		authenticatedUser, err := as.userRepository.GetUser(*user.Id)
+
+		if err != nil {
+			log.Printf("Error [Authenticate]: %v - [%v]", err, *user.Id)
+			return nil, err
+		}
+
+		if user.FacebookId != authenticatedUser.FacebookId {
+			return nil, errors.New("user does not exist")
+		}
+
+		return authenticatedUser, nil
+	}
+}
+
+func (as *ApiService) validateToken(userId string, token string) (bool) {
+	tokenId, err := as.facebookClient.ValidateUser(token)
+
+	if err != nil {
+		log.Printf("Error [facebook.validateToken]: %v - [%v %v]", err, userId, token)
+		return false
+	}
+
+	return tokenId == userId
 }

@@ -26,6 +26,7 @@ func NewRouter(as *service.ApiService, us *service.UpdateService) *Router {
 
 func (router *Router) Start(addr string) {
 	r := mux.NewRouter()
+	r.HandleFunc("/authenticate", router.authenticate).Methods("POST")
 	r.HandleFunc("/lotteries/current", router.getCurrentLottery).Methods("GET")
 	r.HandleFunc("/lotteries/{number}", router.getLottery).Methods("GET")
 	r.HandleFunc("/manager/{country}/teams", router.getTeams).Methods("GET")
@@ -37,6 +38,26 @@ func (router *Router) Start(addr string) {
 	r.HandleFunc("/manager/lotteries", router.createLottery).Methods("POST")
 	r.HandleFunc("/manager/odds/{matchId}", router.importOdds).Methods("POST")
 	log.Fatal(http.ListenAndServe(addr, r))
+}
+
+func (router *Router) authenticate(w http.ResponseWriter, r *http.Request) {
+	var user domain.User
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&user); err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+	defer r.Body.Close()
+
+	token := r.Header.Get("token")
+	authenticatedUser, err := router.apiService.Authenticate(user, token)
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, authenticatedUser)
 }
 
 func (router *Router) createLottery(w http.ResponseWriter, r *http.Request) {
@@ -193,4 +214,3 @@ func (router *Router) respondCreated(w http.ResponseWriter, r *http.Request, pat
 	w.Header().Set("Path", r.Host+path)
 	w.WriteHeader(http.StatusCreated)
 }
-

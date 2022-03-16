@@ -21,10 +21,7 @@ func (tr *TeamRepository) InsertTeams(teams *[]domain.Team) error {
 	stmt, err := tr.db.Prepare(
 		`INSERT INTO team(id, name, logo, country)
 	 	 VALUES(?, ?, ?, ?)
-		 ON DUPLICATE KEY UPDATE 
-			name = coalesce(VALUES(name), name), 
-			logo = coalesce(VALUES(logo), logo),
-			country = coalesce(VALUES(country), country)`)
+		 ON DUPLICATE KEY UPDATE country = coalesce(VALUES(country), country)`)
 
 	if err != nil {
 		log.Printf("Error [InsertTeams]: %v", err)
