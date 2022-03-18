@@ -23,8 +23,8 @@ func NewRouter(as *service.ApiService, us *service.UpdateService) *Router {
 	amw := security.NewAuthenticationMiddleware(as)
 
 	return &Router{
-		apiService:    as,
-		updateService: us,
+		apiService:               as,
+		updateService:            us,
 		authenticationMiddleware: amw,
 	}
 }
@@ -33,6 +33,8 @@ func (router *Router) Start(addr string) {
 	r := mux.NewRouter()
 	r.HandleFunc("/lotteries/current", router.getCurrentLottery).Methods("GET")
 	r.HandleFunc("/lotteries/{number}", router.getLottery).Methods("GET")
+	r.HandleFunc("/poll/{lotteryId}", router.getPollResults).Methods("GET")
+	r.HandleFunc("/poll/{lotteryId}", router.vote).Methods("POST")
 	r.HandleFunc("/manager/{country}/teams", router.getTeams).Methods("GET")
 	r.HandleFunc("/manager/{country}/teams", router.importTeams).Methods("POST")
 	r.HandleFunc("/manager/{country}/competitions/{year}", router.getCompetitions).Methods("GET")
@@ -80,6 +82,45 @@ func (router *Router) getLottery(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, lottery)
+}
+
+func (router *Router) vote(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
+	var poll domain.Poll
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&poll); err != nil {
+		log.Printf("Error [vote]: %v", err)
+		respondWithError(w, http.StatusBadRequest, "invalid request payload")
+		return
+	}
+	defer r.Body.Close()
+
+	user := r.Context().Value("user").(domain.User)
+	err := router.apiService.Vote(poll, user)
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "cannot vote twice")
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, nil)
+}
+
+func (router *Router) getPollResults(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
+	vars := mux.Vars(r)
+	lotteryId, _ := strconv.Atoi(vars["lotteryId"])
+
+	results, err := router.apiService.GetPollResults(lotteryId)
+
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, results)
 }
 
 func (router *Router) getCurrentLottery(w http.ResponseWriter, r *http.Request) {

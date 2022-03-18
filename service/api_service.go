@@ -13,19 +13,22 @@ import (
 type ApiService struct {
 	userRepository    *repository.UserRepository
 	lotteryRepository *repository.LotteryRepository
-	updateSerice      *UpdateService
+	pollRepository    *repository.PollRepository
+	updateService     *UpdateService
 	facebookClient    *client.FacebookClient
 }
 
 func NewApiService(
 	userRepository *repository.UserRepository,
 	lotteryRepository *repository.LotteryRepository,
+	pollRepository *repository.PollRepository,
 	updateService *UpdateService,
 	facebookClient *client.FacebookClient) *ApiService {
 	return &ApiService{
 		userRepository:    userRepository,
 		lotteryRepository: lotteryRepository,
-		updateSerice:      updateService,
+		pollRepository:    pollRepository,
+		updateService:     updateService,
 		facebookClient:    facebookClient,
 	}
 }
@@ -54,37 +57,37 @@ func (as *ApiService) CreateLottery(lottery domain.Lottery) (*domain.Lottery, er
 
 	go func() {
 		for _, match := range *lotteryVO.Matches {
-			err = as.updateSerice.ImportHeadToHead(*match.HomeId, *match.AwayId)
+			err = as.updateService.ImportHeadToHead(*match.HomeId, *match.AwayId)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportHeadToHead]: %v - [%v %v %v]", err, lottery.Number, *match.HomeId, *match.AwayId)
 			}
 
-			err = as.updateSerice.ImportLastMatches(*match.HomeId)
+			err = as.updateService.ImportLastMatches(*match.HomeId)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportLastMatches]: %v - [%v %v]", err, lottery.Number, *match.HomeId)
 			}
 
-			err = as.updateSerice.ImportLastMatches(*match.AwayId)
+			err = as.updateService.ImportLastMatches(*match.AwayId)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportLastMatches]: %v - [%v %v]", err, lottery.Number, *match.AwayId)
 			}
 
-			err = as.updateSerice.ImportNextMatches(*match.HomeId)
+			err = as.updateService.ImportNextMatches(*match.HomeId)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportNextMatches]: %v - [%v %v]", err, lottery.Number, *match.HomeId)
 			}
 
-			err = as.updateSerice.ImportNextMatches(*match.AwayId)
+			err = as.updateService.ImportNextMatches(*match.AwayId)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportNextMatches]: %v - [%v %v]", err, lottery.Number, *match.AwayId)
 			}
 
-			err = as.updateSerice.ImportOdds(*match.Id)
+			err = as.updateService.ImportOdds(*match.Id)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportOdds]: %v - [%v %v]", err, lottery.Number, *match.Id)
@@ -114,6 +117,14 @@ func (as *ApiService) Authenticate(token string) (*domain.User, error) {
 	}
 
 	return authenticatedUser, nil
+}
+
+func (as *ApiService) GetPollResults(lotteryId int) (*view.PollResults, error) {
+	return as.pollRepository.GetPollResults(lotteryId)
+}
+
+func (as *ApiService) Vote(poll domain.Poll, user domain.User) error {
+	return as.pollRepository.Vote(poll, user)
 }
 
 func (as *ApiService) getFacebookUser(token string) (*domain.User, error) {

@@ -94,9 +94,9 @@ CREATE TABLE `user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `lottery_poll` (
-  `lottery_id` int UNIQUE,
-  `match_id` int UNIQUE,
-  `user_id` int UNIQUE,
+  `lottery_id` int,
+  `match_id` int,
+  `user_id` int,
   `result` char,
   `voted_at` timestamp,
   PRIMARY KEY (`lottery_id`, `match_id`, `user_id`)

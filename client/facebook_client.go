@@ -25,10 +25,18 @@ func (c *FacebookClient) GetUser(token string) (*domain.User, error) {
 		return nil, err
 	}
 
-	return &domain.User{
+	user := &domain.User{
 		FacebookId: res.Get("id").(string),
 		Name:       res.Get("name").(string),
-		Email:      res.Get("email").(string),
-		Picture:    res.Get("picture.data.url").(string),
-	}, nil
+	}
+
+	if email := res.Get("email"); email != nil {
+		user.Email = email.(string)
+	}
+
+	if picture := res.Get("picture.data.url"); picture != nil {
+		user.Picture = picture.(string)
+	}
+
+	return user, nil
 }

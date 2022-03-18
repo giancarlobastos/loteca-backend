@@ -105,3 +105,13 @@ type User struct {
 	Email      string `json:"email,omitempty"`
 	Picture    string `json:"picture,omitempty"`
 }
+
+type Poll struct {
+	LotteryId int        `json:"lottery_id,omitempty"`
+	Votes     []Vote     `json:"votes,omitempty"`
+}
+
+type Vote struct {
+	MatchId int    `json:"match_id,omitempty"`
+	Result  string `json:"result,omitempty"`
+}
