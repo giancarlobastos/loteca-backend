@@ -9,6 +9,7 @@ require (
 	github.com/antchfx/xmlquery v1.3.8 // indirect
 	github.com/antchfx/xpath v1.2.0 // indirect
 	github.com/canhlinh/svg2png v0.0.0-20201124065332-6ba87c82371f
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/giancarlobastos/soccer-manager-api v0.0.0-20200903193815-8470b8baee62
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -26,6 +27,7 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20211104221756-aeb4ca2c1505
 	github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780
 	github.com/temoto/robotstxt v1.1.2 // indirect
+	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
 	golang.org/x/net v0.0.0-20211109214657-ef0fda0de508
 	golang.org/x/text v0.3.7 // indirect

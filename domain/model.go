@@ -99,8 +99,9 @@ type Odd struct {
 }
 
 type User struct {
-	Id            *int   `json:"id,omitempty"`
-	Name          string `json:"name,omitempty"`
-	PhotoUrl      string `json:"photo,omitempty"`
-	FacebookId    string `json:"facebook_id,omitempty"`
+	Id         *int   `json:"id,omitempty"`
+	Name       string `json:"name,omitempty"`
+	FacebookId string `json:"facebook_id,omitempty"`
+	Email      string `json:"email,omitempty"`
+	Picture    string `json:"picture,omitempty"`
 }

@@ -8,25 +8,29 @@ import (
 	"strconv"
 
 	"github.com/giancarlobastos/loteca-backend/domain"
+	"github.com/giancarlobastos/loteca-backend/security"
 	"github.com/giancarlobastos/loteca-backend/service"
 	"github.com/gorilla/mux"
 )
 
 type Router struct {
-	apiService    *service.ApiService
-	updateService *service.UpdateService
+	apiService               *service.ApiService
+	updateService            *service.UpdateService
+	authenticationMiddleware *security.AuthenticationMiddleware
 }
 
 func NewRouter(as *service.ApiService, us *service.UpdateService) *Router {
+	amw := security.NewAuthenticationMiddleware(as)
+
 	return &Router{
 		apiService:    as,
 		updateService: us,
+		authenticationMiddleware: amw,
 	}
 }
 
 func (router *Router) Start(addr string) {
 	r := mux.NewRouter()
-	r.HandleFunc("/authenticate", router.authenticate).Methods("POST")
 	r.HandleFunc("/lotteries/current", router.getCurrentLottery).Methods("GET")
 	r.HandleFunc("/lotteries/{number}", router.getLottery).Methods("GET")
 	r.HandleFunc("/manager/{country}/teams", router.getTeams).Methods("GET")
@@ -37,30 +41,13 @@ func (router *Router) Start(addr string) {
 	r.HandleFunc("/manager/{country}/competitions/{competitionId}/{year}/matches", router.importMatches).Methods("POST")
 	r.HandleFunc("/manager/lotteries", router.createLottery).Methods("POST")
 	r.HandleFunc("/manager/odds/{matchId}", router.importOdds).Methods("POST")
+	r.Use(router.authenticationMiddleware.Middleware)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
 
-func (router *Router) authenticate(w http.ResponseWriter, r *http.Request) {
-	var user domain.User
-	decoder := json.NewDecoder(r.Body)
-	if err := decoder.Decode(&user); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
-	defer r.Body.Close()
-
-	token := r.Header.Get("token")
-	authenticatedUser, err := router.apiService.Authenticate(user, token)
-
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	respondWithJSON(w, http.StatusOK, authenticatedUser)
-}
-
 func (router *Router) createLottery(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
 	var lottery domain.Lottery
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&lottery); err != nil {
@@ -80,6 +67,8 @@ func (router *Router) createLottery(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) getLottery(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
 	vars := mux.Vars(r)
 	number, _ := strconv.Atoi(vars["number"])
 
@@ -94,6 +83,8 @@ func (router *Router) getLottery(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) getCurrentLottery(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
 	lottery, err := router.apiService.GetCurrentLottery()
 
 	if err != nil {
@@ -105,6 +96,8 @@ func (router *Router) getCurrentLottery(w http.ResponseWriter, r *http.Request) 
 }
 
 func (router *Router) getTeams(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
 	vars := mux.Vars(r)
 	country := vars["country"]
 	teams, err := router.updateService.GetTeams(country)
@@ -118,6 +111,8 @@ func (router *Router) getTeams(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) importTeams(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
 	vars := mux.Vars(r)
 	country := vars["country"]
 	err := router.updateService.ImportTeams(country)
@@ -131,6 +126,8 @@ func (router *Router) importTeams(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) getCompetitions(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
 	vars := mux.Vars(r)
 	country := vars["country"]
 	year, _ := strconv.Atoi(vars["year"])
@@ -145,6 +142,8 @@ func (router *Router) getCompetitions(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) importCompetitions(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
 	vars := mux.Vars(r)
 	country := vars["country"]
 	err := router.updateService.ImportCompetitions(country)
@@ -158,6 +157,8 @@ func (router *Router) importCompetitions(w http.ResponseWriter, r *http.Request)
 }
 
 func (router *Router) getMatches(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
 	vars := mux.Vars(r)
 	competitionId, _ := strconv.Atoi(vars["competitionId"])
 	year, _ := strconv.Atoi(vars["year"])
@@ -172,6 +173,8 @@ func (router *Router) getMatches(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) importMatches(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
 	vars := mux.Vars(r)
 	competitionId, _ := strconv.Atoi(vars["competitionId"])
 	year, _ := strconv.Atoi(vars["year"])
@@ -186,6 +189,8 @@ func (router *Router) importMatches(w http.ResponseWriter, r *http.Request) {
 }
 
 func (router *Router) importOdds(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
 	vars := mux.Vars(r)
 	matchId, _ := strconv.Atoi(vars["matchId"])
 	err := router.updateService.ImportOdds(matchId)
@@ -213,4 +218,11 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 func (router *Router) respondCreated(w http.ResponseWriter, r *http.Request, path string) {
 	w.Header().Set("Path", r.Host+path)
 	w.WriteHeader(http.StatusCreated)
+}
+
+func handleErrors(w http.ResponseWriter, r *http.Request) {
+	if err := recover(); err != nil {
+		log.Println("[Router] panic occurred:", err)
+		http.NotFound(w, r)
+	}
 }

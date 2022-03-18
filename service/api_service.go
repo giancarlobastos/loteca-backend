@@ -95,47 +95,34 @@ func (as *ApiService) CreateLottery(lottery domain.Lottery) (*domain.Lottery, er
 	return &lottery, nil
 }
 
-func (as *ApiService) Authenticate(user domain.User, token string) (*domain.User, error) {
-	if !as.validateToken(user.FacebookId, token) {
+func (as *ApiService) Authenticate(token string) (*domain.User, error) {
+	user, err := as.getFacebookUser(token)
+
+	if err != nil {
 		return nil, errors.New("invalid facebook id")
 	}
 
-	if user.Id == nil {
-		authenticatedUser, err := as.userRepository.GetUserByFacebookId(user.FacebookId)
-
-		if err != nil {
-			log.Printf("Error [Authenticate]: %v - [%v]", err, user)
-			return nil, err
-		}
-
-		if authenticatedUser == nil {
-			return as.userRepository.InsertUser(&user)
-		}
-
-		return authenticatedUser, nil
-	} else {
-		authenticatedUser, err := as.userRepository.GetUser(*user.Id)
-
-		if err != nil {
-			log.Printf("Error [Authenticate]: %v - [%v]", err, *user.Id)
-			return nil, err
-		}
-
-		if user.FacebookId != authenticatedUser.FacebookId {
-			return nil, errors.New("user does not exist")
-		}
-
-		return authenticatedUser, nil
-	}
-}
-
-func (as *ApiService) validateToken(userId string, token string) (bool) {
-	tokenId, err := as.facebookClient.ValidateUser(token)
+	authenticatedUser, err := as.userRepository.GetUserByFacebookId(user.FacebookId)
 
 	if err != nil {
-		log.Printf("Error [facebook.validateToken]: %v - [%v %v]", err, userId, token)
-		return false
+		log.Printf("Error [Authenticate]: %v - [%v]", err, user.FacebookId)
+		return nil, err
 	}
 
-	return tokenId == userId
+	if authenticatedUser == nil {
+		return as.userRepository.InsertUser(user)
+	}
+
+	return authenticatedUser, nil
+}
+
+func (as *ApiService) getFacebookUser(token string) (*domain.User, error) {
+	user, err := as.facebookClient.GetUser(token)
+
+	if err != nil {
+		log.Printf("Error [facebook.validateToken]: %v - [%v]", err, token)
+		return nil, err
+	}
+
+	return user, nil
 }
