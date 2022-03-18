@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"sync"
 
 	"github.com/giancarlobastos/loteca-backend/api"
 	"github.com/giancarlobastos/loteca-backend/client"
@@ -18,7 +19,20 @@ var (
 
 func main() {
 	defer destroy()
-	router.Start(":8080")
+	wg := new(sync.WaitGroup)
+	wg.Add(2)
+	
+	go func() {
+		router.Start(":9000")
+		wg.Done()
+	}()
+
+	go func() {
+		router.Start(":9001")
+		wg.Done()
+	}()
+
+	wg.Wait()
 }
 
 func init() {
