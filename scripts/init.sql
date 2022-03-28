@@ -65,7 +65,7 @@ CREATE TABLE `match` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `lottery` (
-  `id` int PRIMARY KEY AUTO_INCREMENT,
+  `id` int PRIMARY KEY,
   `name` varchar(255),
   `number` int,
   `estimated_prize` double,
@@ -75,7 +75,8 @@ CREATE TABLE `lottery` (
   `side_prize_winners` int,
   `special_prize` double,
   `accumulated` boolean,
-  `end_at` timestamp
+  `end_at` timestamp,
+  `enabled` boolean NOT NULL DEFAULT FALSE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `lottery_match` (
@@ -105,7 +106,7 @@ CREATE TABLE `lottery_poll` (
 CREATE TABLE `betting_platform` (
   `id` int PRIMARY KEY,
   `name` varchar(255),
-  `url` varchar(255)
+  `url` varchar(255),
   `preference` int
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

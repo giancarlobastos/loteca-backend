@@ -28,6 +28,7 @@ func (lr *LotteryRepository) GetCurrentLottery() (*view.Lottery, error) {
 		`SELECT id, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
 			side_prize_winners, special_prize, accumulated, end_at
 	     FROM lottery 
+		 WHERE enabled
 		 ORDER BY number DESC
 		 LIMIT 1`
 
@@ -39,7 +40,7 @@ func (lr *LotteryRepository) GetLottery(number int) (*view.Lottery, error) {
 		`SELECT id, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
 			side_prize_winners, special_prize, accumulated, end_at
 	     FROM lottery 
-		 WHERE number = ?`
+		 WHERE number = ? AND enabled`
 
 	return lr.getLottery(query, number)
 }
@@ -130,9 +131,9 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 			log.Printf("Error [GetCompetition]: %v", err)
 			return nil, err
 		}
-	}
 
-	lottery.Matches, _ = lr.matchRepository.GetLotteryMatches(*lottery.Id)
+		lottery.Matches, _ = lr.matchRepository.GetLotteryMatches(*lottery.Id)
+	}
 
 	return &lottery, err
 }

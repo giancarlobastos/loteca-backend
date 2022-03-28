@@ -4,8 +4,10 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/giancarlobastos/loteca-backend/service"
+	"github.com/gorilla/mux"
 )
 
 type AuthenticationMiddleware struct {
@@ -27,7 +29,23 @@ func (amw *AuthenticationMiddleware) Middleware(next http.Handler) http.Handler 
 			}
 		}()
 
+		isManagementEndpoint, err := amw.isManagementEndpoint(r)
+
+		if err != nil {
+			http.Error(w, "unauthorized", http.StatusForbidden)
+			return
+		}
+
 		token := r.Header.Get("Token")
+
+		if isManagementEndpoint && amw.apiService.AuthenticateManager(token) == nil {
+			next.ServeHTTP(w, r)
+			return
+		} else if isManagementEndpoint {
+			http.Error(w, "unauthorized", http.StatusForbidden)
+			return
+		}
+
 		user, err := amw.apiService.Authenticate(token)
 
 		if err != nil {
@@ -37,4 +55,16 @@ func (amw *AuthenticationMiddleware) Middleware(next http.Handler) http.Handler 
 
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), "user", *user)))
 	})
+}
+
+func (amw *AuthenticationMiddleware) isManagementEndpoint(r *http.Request) (bool, error) {
+	route := mux.CurrentRoute(r)
+	path, err := route.GetPathTemplate()
+
+	if err != nil {
+		log.Printf("Error [isManagementEndpoint] - %v", err)
+		return false, err
+	}
+
+	return strings.HasPrefix(path, "/manager/"), nil
 }

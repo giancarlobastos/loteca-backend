@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"log"
+	"time"
 
 	"github.com/giancarlobastos/loteca-backend/client"
 	"github.com/giancarlobastos/loteca-backend/domain"
@@ -119,12 +120,31 @@ func (as *ApiService) Authenticate(token string) (*domain.User, error) {
 	return authenticatedUser, nil
 }
 
+func (as *ApiService) AuthenticateManager(token string) error {
+	if token != "0RjZAhNDhXOHZAXZAXNTNTQwWXdsZAmVPZAktVX1RIOXg2YjczMwZDZD" {
+		return errors.New("invalid manager")
+	}
+
+	return nil
+}
+
 func (as *ApiService) GetPollResults(lotteryId int) (*view.PollResults, error) {
 	return as.pollRepository.GetPollResults(lotteryId)
 }
 
 func (as *ApiService) Vote(poll domain.Poll, user domain.User) error {
-	return as.pollRepository.Vote(poll, user)
+	lottery, err := as.lotteryRepository.GetCurrentLottery()
+
+	if err != nil && lottery.Id != nil {
+
+		if time.Now().After(*lottery.EndAt) {
+			return errors.New("voting period is over")
+		}
+
+		return as.pollRepository.Vote(poll, user)
+	}
+
+	return err
 }
 
 func (as *ApiService) getFacebookUser(token string) (*domain.User, error) {
