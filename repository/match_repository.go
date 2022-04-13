@@ -23,7 +23,7 @@ func NewMatchRepository(db *sql.DB) *MatchRepository {
 func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, rounds *[]domain.Round) error {
 	tx, err := mr.db.BeginTx(context.Background(), nil)
 
-	if err !=nil {
+	if err != nil {
 		log.Printf("Error [CreateLottery]: %v", err)
 		return err
 	}
@@ -69,9 +69,33 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, r
 			}
 		}
 	}
-	
+
 	err = tx.Commit()
 	return err
+}
+
+func (mr *MatchRepository) GetMatch(matchId int) (*view.Match, error) {
+	matches, err := mr.getMatches(
+		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t1.logo, t2.id, t2.name, t2.logo, s.name, 
+			m.start_at, m.home_score, m.away_score, NULL
+		 FROM`+" `match` "+`m
+		 JOIN round r ON m.round_id = r.id
+		 JOIN competition c ON r.competition_id = c.id
+		 JOIN team t1 ON m.home_id = t1.id
+		 JOIN team t2 ON m.away_id = t2.id
+		 LEFT JOIN stadium s ON m.stadium_id = s.id
+		 WHERE m.id = ?`, &matchId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(*matches) == 0 {
+		log.Printf("Error [GetMatch]: match not found - [%v]", matchId)
+
+	}
+
+	return &(*matches)[0], nil
 }
 
 func (mr *MatchRepository) GetH2HMatches(homeId int, awayId int, before time.Time) (*[]view.Match, error) {
@@ -104,7 +128,7 @@ func (mr *MatchRepository) GetLastMatches(teamId int, before time.Time) (*[]view
 		 LIMIT 5`, &teamId, &teamId, &before)
 }
 
-func (mr *MatchRepository) GetNextMatches(teamId int, after time.Time) (*[]view.Match, error) {
+func (mr *MatchRepository) GetNextMatches(matchId int, teamId int, after time.Time) (*[]view.Match, error) {
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t1.logo, t2.id, t2.name, t2.logo, s.name, 
 			m.start_at, m.home_score, m.away_score, NULL
@@ -114,9 +138,9 @@ func (mr *MatchRepository) GetNextMatches(teamId int, after time.Time) (*[]view.
 		 JOIN team t1 ON m.home_id = t1.id
 		 JOIN team t2 ON m.away_id = t2.id
 		 LEFT JOIN stadium s ON m.stadium_id = s.id
-		 WHERE (t1.id = ? OR t2.id = ?) AND m.start_at > ? AND m.home_score IS NULL
+		 WHERE (t1.id = ? OR t2.id = ?) AND m.start_at > ? AND m.home_score IS NULL AND m.id != ?
 		 ORDER BY m.start_at
-		 LIMIT 5`, &teamId, &teamId, &after)
+		 LIMIT 5`, &teamId, &teamId, &after, &matchId)
 }
 
 func (mr *MatchRepository) GetLastCompetitionMatches(competitionId int, year int, teamId int, before time.Time) (*[]view.Match, error) {
@@ -134,7 +158,7 @@ func (mr *MatchRepository) GetLastCompetitionMatches(competitionId int, year int
 		 LIMIT 5`, &teamId, &teamId, &before, &competitionId, &year)
 }
 
-func (mr *MatchRepository) GetNextCompetitionMatches(competitionId int, year int, teamId int, after time.Time) (*[]view.Match, error) {
+func (mr *MatchRepository) GetLastCompetitionHomeMatches(competitionId int, year int, teamId int, before time.Time) (*[]view.Match, error) {
 	return mr.getMatches(
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t1.logo, t2.id, t2.name, t2.logo, s.name, 
 			m.start_at, m.home_score, m.away_score, NULL
@@ -144,9 +168,24 @@ func (mr *MatchRepository) GetNextCompetitionMatches(competitionId int, year int
 		 JOIN team t1 ON m.home_id = t1.id
 		 JOIN team t2 ON m.away_id = t2.id
 		 LEFT JOIN stadium s ON m.stadium_id = s.id
-		 WHERE (t1.id = ? OR t2.id = ?) AND m.start_at > ? AND m.home_score IS NULL AND c.id = ? AND r.year = ?
-		 ORDER BY m.start_at
-		 LIMIT 5`, &teamId, &teamId, &after, &competitionId, &year)
+		 WHERE t1.id = ? AND m.start_at < ? AND m.home_score IS NOT NULL AND c.id = ? AND r.year = ?
+		 ORDER BY m.start_at DESC
+		 LIMIT 5`, &teamId, &before, &competitionId, &year)
+}
+
+func (mr *MatchRepository) GetLastCompetitionAwayMatches(competitionId int, year int, teamId int, before time.Time) (*[]view.Match, error) {
+	return mr.getMatches(
+		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, t1.id, t1.name, t1.logo, t2.id, t2.name, t2.logo, s.name, 
+			m.start_at, m.home_score, m.away_score, NULL
+		 FROM`+" `match` "+`m
+		 JOIN round r ON m.round_id = r.id
+		 JOIN competition c ON r.competition_id = c.id
+		 JOIN team t1 ON m.home_id = t1.id
+		 JOIN team t2 ON m.away_id = t2.id
+		 LEFT JOIN stadium s ON m.stadium_id = s.id
+		 WHERE t2.id = ? AND m.start_at < ? AND m.home_score IS NOT NULL AND c.id = ? AND r.year = ?
+		 ORDER BY m.start_at DESC
+		 LIMIT 5`, &teamId, &before, &competitionId, &year)
 }
 
 func (mr *MatchRepository) GetMatches(competitionId int, year int) (*[]view.Match, error) {

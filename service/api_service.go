@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -12,34 +13,168 @@ import (
 )
 
 type ApiService struct {
-	userRepository    *repository.UserRepository
-	lotteryRepository *repository.LotteryRepository
-	pollRepository    *repository.PollRepository
-	updateService     *UpdateService
-	facebookClient    *client.FacebookClient
+	userRepository        *repository.UserRepository
+	lotteryRepository     *repository.LotteryRepository
+	pollRepository        *repository.PollRepository
+	matchRepository       *repository.MatchRepository
+	bookmakerRepository   *repository.BookmakerRepository
+	competitionRepository *repository.CompetitionRepository
+	updateService         *UpdateService
+	facebookClient        *client.FacebookClient
+	cacheService          *CacheService
 }
 
 func NewApiService(
 	userRepository *repository.UserRepository,
 	lotteryRepository *repository.LotteryRepository,
 	pollRepository *repository.PollRepository,
+	matchRepository *repository.MatchRepository,
+	bookmakerRepository *repository.BookmakerRepository,
+	competitionRepository *repository.CompetitionRepository,
 	updateService *UpdateService,
-	facebookClient *client.FacebookClient) *ApiService {
+	facebookClient *client.FacebookClient,
+	cacheService *CacheService) *ApiService {
 	return &ApiService{
-		userRepository:    userRepository,
-		lotteryRepository: lotteryRepository,
-		pollRepository:    pollRepository,
-		updateService:     updateService,
-		facebookClient:    facebookClient,
+		userRepository:        userRepository,
+		lotteryRepository:     lotteryRepository,
+		pollRepository:        pollRepository,
+		matchRepository:       matchRepository,
+		bookmakerRepository:   bookmakerRepository,
+		competitionRepository: competitionRepository,
+		updateService:         updateService,
+		facebookClient:        facebookClient,
+		cacheService:          cacheService,
 	}
 }
 
-func (as *ApiService) GetCurrentLottery() (lottery *view.Lottery, err error) {
-	return as.lotteryRepository.GetCurrentLottery()
+func (as *ApiService) GetCurrentLottery() (*view.Lottery, error) {
+	lottery, err := as.cacheService.Get("currentLottery")
+
+	if err != nil {
+		lottery, err = as.lotteryRepository.GetCurrentLottery()
+
+		if err != nil {
+			return nil, err
+		}
+
+		as.cacheService.Put("currentLottery", lottery)
+	}
+
+	return lottery.(*view.Lottery), nil
 }
 
-func (as *ApiService) GetLottery(number int) (lottery *view.Lottery, err error) {
-	return as.lotteryRepository.GetLottery(number)
+func (as *ApiService) GetLottery(number int) (*view.Lottery, error) {
+	key := fmt.Sprint("lottery_", number)
+	lottery, err := as.cacheService.Get(key)
+
+	if err != nil {
+		lottery, err = as.lotteryRepository.GetLottery(number)
+
+		if err != nil {
+			return nil, err
+		}
+
+		as.cacheService.Put(key, lottery)
+	}
+
+	return lottery.(*view.Lottery), nil
+}
+
+func (as *ApiService) GetPollResults(lotteryId int) (*view.PollResults, error) {
+	key := fmt.Sprint("poll_results_", lotteryId)
+	pollResults, err := as.cacheService.Get(key)
+
+	if err != nil {
+		pollResults, err = as.pollRepository.GetPollResults(lotteryId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		as.cacheService.Put(key, pollResults)
+	}
+
+	return pollResults.(*view.PollResults), nil
+}
+
+func (as *ApiService) Vote(poll domain.Poll, user domain.User) error {
+	lottery, err := as.GetCurrentLottery()
+
+	if err == nil && lottery.Id != nil {
+
+		if time.Now().After(*lottery.EndAt) {
+			return errors.New("voting period is over")
+		}
+
+		err = as.pollRepository.Vote(poll, user)
+
+		if err == nil {
+			key := fmt.Sprint("poll_results_", lottery.Id)
+			as.cacheService.Delete(key)
+		}
+	}
+
+	return err
+}
+
+func (as *ApiService) GetMatchDetails(matchId int) (*view.MatchDetails, error) {
+	key := fmt.Sprint("details_", matchId)
+	matchDetails, err := as.cacheService.Get(key)
+
+	if err != nil {
+		match, err := as.matchRepository.GetMatch(matchId)
+
+		if err != nil {
+			return nil, err
+		}
+
+		h2h, _ := as.matchRepository.GetH2HMatches(*match.HomeId, *match.AwayId, *match.StartAt)
+		lastMatchesHome, _ := as.matchRepository.GetLastMatches(*match.HomeId, time.Now())
+		lastMatchesHomeCompetition, _ := as.matchRepository.GetLastCompetitionMatches(*match.CompetitionId, *match.Year, *match.HomeId, time.Now())
+		lastMatchesAtHome, _ := as.matchRepository.GetLastCompetitionHomeMatches(*match.CompetitionId, *match.Year, *match.HomeId, time.Now())
+		nextMatchesHome, _ := as.matchRepository.GetNextMatches(*match.Id, *match.HomeId, *match.StartAt)
+		lastMatchesAway, _ := as.matchRepository.GetLastMatches(*match.AwayId, time.Now())
+		lastMatchesAwayCompetition, _ := as.matchRepository.GetLastCompetitionMatches(*match.CompetitionId, *match.Year, *match.AwayId, time.Now())
+		lastMatchesAtAway, _ := as.matchRepository.GetLastCompetitionAwayMatches(*match.CompetitionId, *match.Year, *match.AwayId, time.Now())
+		nextMatchesAway, _ := as.matchRepository.GetNextMatches(*match.Id, *match.AwayId, *match.StartAt)
+		votes, totalVotes, _ := as.pollRepository.GetVotes(*match.Id)
+		odds, _ := as.getOdds(*match.Id)
+
+		teamsStats := make([]view.TeamStats, 0)
+		teamStats, _ := as.competitionRepository.GetTeamStats(*match.CompetitionId, *match.Year, *match.HomeId)
+
+		if teamStats != nil {
+			teamsStats = append(teamsStats, *teamStats)
+		}
+
+		teamStats, _ = as.competitionRepository.GetTeamStats(*match.CompetitionId, *match.Year, *match.AwayId)
+
+		if teamStats != nil {
+			teamsStats = append(teamsStats, *teamStats)
+		}
+
+		matchDetails = &view.MatchDetails{
+			Id:                         &matchId,
+			Match:                      match,
+			TeamStats:                  &teamsStats,
+			H2H:                        h2h,
+			LastMatchesHome:            lastMatchesHome,
+			LastMatchesHomeCompetition: lastMatchesHomeCompetition,
+			LastMatchesAtHome:          lastMatchesAtHome,
+			NextMatchesHome:            nextMatchesHome,
+			LastMatchesAway:            lastMatchesAway,
+			LastMatchesAwayCompetition: lastMatchesAwayCompetition,
+			LastMatchesAtAway:          lastMatchesAtAway,
+			NextMatchesAway:            nextMatchesAway,
+			Votes:                      votes,
+			TotalVotes:                 totalVotes,
+			Odds:                       odds,
+		}
+
+		as.cacheService.Put(key, matchDetails)
+	}
+
+	return matchDetails.(*view.MatchDetails), nil
 }
 
 func (as *ApiService) CreateLottery(lottery domain.Lottery) (*domain.Lottery, error) {
@@ -128,25 +263,6 @@ func (as *ApiService) AuthenticateManager(token string) error {
 	return nil
 }
 
-func (as *ApiService) GetPollResults(lotteryId int) (*view.PollResults, error) {
-	return as.pollRepository.GetPollResults(lotteryId)
-}
-
-func (as *ApiService) Vote(poll domain.Poll, user domain.User) error {
-	lottery, err := as.lotteryRepository.GetCurrentLottery()
-
-	if err != nil && lottery.Id != nil {
-
-		if time.Now().After(*lottery.EndAt) {
-			return errors.New("voting period is over")
-		}
-
-		return as.pollRepository.Vote(poll, user)
-	}
-
-	return err
-}
-
 func (as *ApiService) getFacebookUser(token string) (*domain.User, error) {
 	user, err := as.facebookClient.GetUser(token)
 
@@ -156,4 +272,27 @@ func (as *ApiService) getFacebookUser(token string) (*domain.User, error) {
 	}
 
 	return user, nil
+}
+
+func (as *ApiService) getOdds(matchId int) (*[]view.Odd, error) {
+	odds, err := as.bookmakerRepository.GetOdds(matchId)
+
+	if err != nil {
+		log.Printf("Error [getOdds]: %v - [%v]", err, matchId)
+		return nil, err
+	}
+
+	viewOdds := make([]view.Odd, 0)
+
+	for _, odd := range *odds {
+		viewOdds = append(viewOdds, view.Odd{
+			BookmakerId:   odd.Bookmaker.Id,
+			BookmakerName: odd.Bookmaker.Name,
+			Home:          odd.Home,
+			Draw:          odd.Draw,
+			Away:          odd.Away,
+		})
+	}
+
+	return &viewOdds, nil
 }

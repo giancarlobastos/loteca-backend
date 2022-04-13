@@ -33,6 +33,7 @@ func (router *Router) Start(addr string) {
 	r := mux.NewRouter()
 	r.HandleFunc("/lotteries/current", router.getCurrentLottery).Methods("GET")
 	r.HandleFunc("/lotteries/{number}", router.getLottery).Methods("GET")
+	r.HandleFunc("/matches/{matchId}", router.getMatchDetails).Methods("GET")
 	r.HandleFunc("/poll/{lotteryId}", router.getPollResults).Methods("GET")
 	r.HandleFunc("/poll/{lotteryId}", router.vote).Methods("POST")
 	r.HandleFunc("/manager/{country}/teams", router.getTeams).Methods("GET")
@@ -82,6 +83,22 @@ func (router *Router) getLottery(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, lottery)
+}
+
+func (router *Router) getMatchDetails(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
+	vars := mux.Vars(r)
+	matchId, _ := strconv.Atoi(vars["matchId"])
+
+	matchDetails, err := router.apiService.GetMatchDetails(matchId)
+
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, matchDetails)
 }
 
 func (router *Router) vote(w http.ResponseWriter, r *http.Request) {

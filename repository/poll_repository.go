@@ -69,6 +69,53 @@ func (pr *PollRepository) GetPollResults(lotteryId int) (*view.PollResults, erro
 	return &results, err
 }
 
+func (pr *PollRepository) GetVotes(matchId int) (*view.Vote, int, error) {
+	stmt, err := pr.db.Prepare(
+		`SELECT 
+		    count(case when lp.result = 'H' then 1 else null end) as home_votes,
+		 	count(case when lp.result = 'D' then 1 else null end) as draw_votes,
+		 	count(case when lp.result = 'A' then 1 else null end) as away_votes,
+			count(DISTINCT lp.user_id) total_votes
+		 FROM lottery_poll lp
+		 WHERE lp.match_id = ?
+		 GROUP BY lp.match_id`)
+
+	if err != nil {
+		log.Printf("Error [GetVotes]: %v - [%v]", err, matchId)
+		return nil, 0, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(matchId)
+
+	if err != nil {
+		log.Printf("Error [GetVotes]: %v - [%v]", err, matchId)
+		return nil, 0, err
+	}
+
+	defer rows.Close()
+
+	if rows.Next() {
+		vote := view.Vote{
+			MatchId: matchId,
+		}
+
+		totalVotes := 0
+
+		err = rows.Scan(&vote.HomeVotes, &vote.DrawVotes, &vote.AwayVotes, &totalVotes)
+
+		if err != nil {
+			log.Printf("Error [GetVotes]: %v - [%v]", err, matchId)
+			return nil, 0, err
+		}
+
+		return &vote, totalVotes, err
+	}
+
+	return nil, 0, err
+}
+
 func (lr *PollRepository) Vote(poll domain.Poll, user domain.User) error {
 	tx, err := lr.db.BeginTx(context.Background(), nil)
 
@@ -89,7 +136,7 @@ func (lr *PollRepository) Vote(poll domain.Poll, user domain.User) error {
 	defer stmt.Close()
 
 	votedAt := time.Now()
-	
+
 	for _, vote := range poll.Votes {
 		_, err = stmt.Exec(poll.LotteryId, vote.MatchId, *user.Id, vote.Result, votedAt)
 

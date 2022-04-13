@@ -39,6 +39,24 @@ type Match struct {
 	Order           *int       `json:"order,omitempty"`
 }
 
+type MatchDetails struct {
+	Id                         *int         `json:"id"`
+	Match                      *Match       `json:"match"`
+	TeamStats                  *[]TeamStats `json:"stats"`
+	H2H                        *[]Match     `json:"h2h"`
+	LastMatchesHome            *[]Match     `json:"last_matches_home"`
+	LastMatchesAway            *[]Match     `json:"last_matches_away"`
+	LastMatchesHomeCompetition *[]Match     `json:"last_matches_home_competition"`
+	LastMatchesAwayCompetition *[]Match     `json:"last_matches_away_competition"`
+	LastMatchesAtHome          *[]Match     `json:"last_matches_at_home"`
+	LastMatchesAtAway          *[]Match     `json:"last_matches_at_away"`
+	NextMatchesHome            *[]Match     `json:"next_matches_home"`
+	NextMatchesAway            *[]Match     `json:"next_matches_away"`
+	Odds                       *[]Odd       `json:"odds"`
+	Votes                      *Vote        `json:"votes"`
+	TotalVotes                 int          `json:"total_votes"`
+}
+
 type PollResults struct {
 	LotteryId  int    `json:"lottery_id"`
 	Votes      []Vote `json:"votes"`
@@ -50,4 +68,23 @@ type Vote struct {
 	HomeVotes int `json:"home_votes"`
 	DrawVotes int `json:"draw_votes"`
 	AwayVotes int `json:"away_votes"`
+}
+
+type TeamStats struct {
+	TeamId int `json:"team_id"`
+	M      int `json:"m"`
+	W      int `json:"w"`
+	D      int `json:"d"`
+	L      int `json:"l"`
+	GP     int `json:"gp"`
+	GC     int `json:"gc"`
+	SG     int `json:"sg"`
+}
+
+type Odd struct {
+	BookmakerId   int     `json:"bookmaker_id"`
+	BookmakerName string     `json:"bookmaker_name"`
+	Home          float32 `json:"home"`
+	Draw          float32 `json:"draw"`
+	Away          float32 `json:"away"`
 }

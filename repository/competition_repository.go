@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/giancarlobastos/loteca-backend/domain"
+	"github.com/giancarlobastos/loteca-backend/view"
 )
 
 type CompetitionRepository struct {
@@ -178,4 +179,55 @@ func (cr *CompetitionRepository) GetCompetition(competitionId int, year int) (*d
 	}
 
 	return &competition, err
+}
+
+func (cr *CompetitionRepository) GetTeamStats(competitionId int, year int, teamId int) (*view.TeamStats, error) {
+	stmt, err := cr.db.Prepare(
+		`SELECT
+			count(*) M,
+			count(case when 
+			  (m.home_score > m.away_score AND m.home_id = ?) OR
+		  	  (m.away_score > m.home_score AND m.away_id = ?) then 1 else null end) as W,
+			count(case when m.home_score = m.away_score then 1 else null end) as D,
+			count(case when 
+		  	  (m.home_score < m.away_score AND m.home_id = ?) OR
+		      (m.away_score < m.home_score AND m.away_id = ?) then 1 else null end) as L,
+			sum(case when m.home_id = ? then m.home_score else m.away_score end) as GP,
+			sum(case when m.home_id = ? then m.away_score else m.home_score end) as GC
+	  	 FROM round r
+	  	 JOIN` + " `match` " + `m ON m.round_id = r.id
+	  	 WHERE r.competition_id = ? AND r.year = ? 
+			AND (m.home_id = ? OR m.away_id = ?) AND m.home_score IS NOT NULL`)
+
+	if err != nil {
+		log.Printf("Error [GetCompetition]: %v - [%v, %v]", err, competitionId, year)
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(teamId, teamId, teamId, teamId, teamId, teamId, competitionId, year, teamId, teamId)
+
+	if err != nil {
+		log.Printf("Error [GetTeamStats]: %v - [%v, %v %v]", err, competitionId, year, teamId)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	teamStats := view.TeamStats{}
+
+	if rows.Next() {
+		err = rows.Scan(&teamStats.M, &teamStats.W, &teamStats.D, &teamStats.L, &teamStats.GP, &teamStats.GC)
+
+		if err != nil {
+			log.Printf("Error [GetTeamStats]: %v", err)
+			return nil, err
+		}
+
+		teamStats.TeamId = teamId
+		teamStats.SG = teamStats.GP - teamStats.GC
+	}
+
+	return &teamStats, err
 }

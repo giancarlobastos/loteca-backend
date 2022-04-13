@@ -21,7 +21,7 @@ func main() {
 	defer destroy()
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
-	
+
 	go func() {
 		router.Start(":9000")
 		wg.Done()
@@ -54,8 +54,9 @@ func init() {
 	apiClient := client.NewApiFootballClient()
 	facebookClient := client.NewFacebookClient()
 
+	cacheService := service.NewCacheService()
 	updateService := service.NewUpdateService(teamRepository, competitionRepository, matchRepository, bookmakerRepository, apiClient)
-	apiService := service.NewApiService(userRepository, lotteryRepository, pollRepository, updateService, facebookClient)
+	apiService := service.NewApiService(userRepository, lotteryRepository, pollRepository, matchRepository, bookmakerRepository, competitionRepository, updateService, facebookClient, cacheService)
 
 	router = api.NewRouter(apiService, updateService)
 }
