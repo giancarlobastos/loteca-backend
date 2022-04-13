@@ -8,10 +8,13 @@ import (
 )
 
 type FacebookClient struct {
+	app *fb.App
 }
 
 func NewFacebookClient() *FacebookClient {
-	return &FacebookClient{}
+	return &FacebookClient{
+		app: fb.New("4735477359823746", "b760602140f2c66b01c2f4abeb674cbf"),
+	}
 }
 
 func (c *FacebookClient) GetUser(token string) (*domain.User, error) {
@@ -39,4 +42,15 @@ func (c *FacebookClient) GetUser(token string) (*domain.User, error) {
 	}
 
 	return user, nil
+}
+
+func (c *FacebookClient) GetExtendedToken(token string) (*string, error) {
+	extendedToken, _, err := c.app.ExchangeToken(token)
+
+	if err != nil {
+		log.Printf("Error [GetExtendedToken]: %v - [%v]", err, token)
+		return nil, err
+	}
+
+	return &extendedToken, nil
 }

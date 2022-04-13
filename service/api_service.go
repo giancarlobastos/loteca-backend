@@ -234,25 +234,48 @@ func (as *ApiService) CreateLottery(lottery domain.Lottery) (*domain.Lottery, er
 	return &lottery, nil
 }
 
-func (as *ApiService) Authenticate(token string) (*domain.User, error) {
-	user, err := as.getFacebookUser(token)
+func (as *ApiService) Login(token string) (*string, error) {
+	extendedToken, err := as.facebookClient.GetExtendedToken(token)
 
 	if err != nil {
 		return nil, errors.New("invalid facebook id")
 	}
 
-	authenticatedUser, err := as.userRepository.GetUserByFacebookId(user.FacebookId)
+	return extendedToken, nil
+}
+
+func (as *ApiService) Authenticate(token string) (*domain.User, error) {
+	key := fmt.Sprint("user_", token)
+	user, err := as.cacheService.Get(key)
 
 	if err != nil {
-		log.Printf("Error [Authenticate]: %v - [%v]", err, user.FacebookId)
-		return nil, err
+		facebookUser, err := as.getFacebookUser(token)
+
+		if err != nil {
+			return nil, errors.New("invalid facebook id")
+		}
+
+		authenticatedUser, err := as.userRepository.GetUserByFacebookId(facebookUser.FacebookId)
+
+		if err != nil {
+			log.Printf("Error [Authenticate]: %v - [%v]", err, facebookUser.FacebookId)
+			return nil, err
+		}
+
+		if authenticatedUser == nil {
+			authenticatedUser, err = as.userRepository.InsertUser(facebookUser)
+		}
+
+		if err != nil {
+			log.Printf("Error [Authenticate.InsertUser]: %v - [%v]", err, facebookUser.FacebookId)
+			return nil, err
+		}
+
+		as.cacheService.Put(key, authenticatedUser)
+		return authenticatedUser, nil
 	}
 
-	if authenticatedUser == nil {
-		return as.userRepository.InsertUser(user)
-	}
-
-	return authenticatedUser, nil
+	return user.(*domain.User), nil
 }
 
 func (as *ApiService) AuthenticateManager(token string) error {
@@ -264,21 +287,14 @@ func (as *ApiService) AuthenticateManager(token string) error {
 }
 
 func (as *ApiService) getFacebookUser(token string) (*domain.User, error) {
-	key := fmt.Sprint("token_", token)
-	user, err := as.cacheService.Get(key)
+	user, err := as.facebookClient.GetUser(token)
 
 	if err != nil {
-		user, err = as.facebookClient.GetUser(token)
-
-		if err != nil {
-			log.Printf("Error [facebook.validateToken]: %v - [%v]", err, token)
-			return nil, err
-		}
-
-		as.cacheService.Put(key, user)
+		log.Printf("Error [facebook.validateToken]: %v - [%v]", err, token)
+		return nil, err
 	}
 
-	return user.(*domain.User), nil
+	return user, nil
 }
 
 func (as *ApiService) getOdds(matchId int) (*[]view.Odd, error) {

@@ -38,7 +38,12 @@ func (amw *AuthenticationMiddleware) Middleware(next http.Handler) http.Handler 
 
 		token := r.Header.Get("Token")
 
-		if isManagementEndpoint && amw.apiService.AuthenticateManager(token) == nil {
+		isLoginEndpoint, err := amw.isLoginEndpoint(r)
+
+		if isLoginEndpoint {
+			next.ServeHTTP(w, r)
+			return
+		} else if isManagementEndpoint && amw.apiService.AuthenticateManager(token) == nil {
 			next.ServeHTTP(w, r)
 			return
 		} else if isManagementEndpoint {
@@ -67,4 +72,16 @@ func (amw *AuthenticationMiddleware) isManagementEndpoint(r *http.Request) (bool
 	}
 
 	return strings.HasPrefix(path, "/manager/"), nil
+}
+
+func (amw *AuthenticationMiddleware) isLoginEndpoint(r *http.Request) (bool, error) {
+	route := mux.CurrentRoute(r)
+	path, err := route.GetPathTemplate()
+
+	if err != nil {
+		log.Printf("Error [isLoginEndpoint] - %v", err)
+		return false, err
+	}
+
+	return strings.HasPrefix(path, "/login"), nil
 }

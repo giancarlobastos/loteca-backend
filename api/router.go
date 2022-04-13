@@ -36,6 +36,7 @@ func (router *Router) Start(addr string) {
 	r.HandleFunc("/matches/{matchId}", router.getMatchDetails).Methods("GET")
 	r.HandleFunc("/poll/{lotteryId}", router.getPollResults).Methods("GET")
 	r.HandleFunc("/poll/{lotteryId}", router.vote).Methods("POST")
+	r.HandleFunc("/login", router.login).Methods("POST")
 	r.HandleFunc("/manager/{country}/teams", router.getTeams).Methods("GET")
 	r.HandleFunc("/manager/{country}/teams", router.importTeams).Methods("POST")
 	r.HandleFunc("/manager/{country}/competitions/{year}", router.getCompetitions).Methods("GET")
@@ -46,6 +47,22 @@ func (router *Router) Start(addr string) {
 	r.HandleFunc("/manager/odds/{matchId}", router.importOdds).Methods("POST")
 	r.Use(router.authenticationMiddleware.Middleware)
 	log.Fatal(http.ListenAndServe(addr, r))
+}
+
+func (router *Router) login(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
+	token := r.Header.Get("Token")
+	
+	extendedToken, err := router.apiService.Login(token)
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid token")
+		return
+	}
+	defer r.Body.Close()
+
+	respondWithJSON(w, http.StatusOK, extendedToken)
 }
 
 func (router *Router) createLottery(w http.ResponseWriter, r *http.Request) {
