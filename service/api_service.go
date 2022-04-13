@@ -264,14 +264,21 @@ func (as *ApiService) AuthenticateManager(token string) error {
 }
 
 func (as *ApiService) getFacebookUser(token string) (*domain.User, error) {
-	user, err := as.facebookClient.GetUser(token)
+	key := fmt.Sprint("token_", token)
+	user, err := as.cacheService.Get(key)
 
 	if err != nil {
-		log.Printf("Error [facebook.validateToken]: %v - [%v]", err, token)
-		return nil, err
+		user, err = as.facebookClient.GetUser(token)
+
+		if err != nil {
+			log.Printf("Error [facebook.validateToken]: %v - [%v]", err, token)
+			return nil, err
+		}
+
+		as.cacheService.Put(key, user)
 	}
 
-	return user, nil
+	return user.(*domain.User), nil
 }
 
 func (as *ApiService) getOdds(matchId int) (*[]view.Odd, error) {
