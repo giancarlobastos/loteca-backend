@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 	"time"
 
 	"github.com/giancarlobastos/loteca-backend/client"
@@ -53,7 +54,7 @@ func (as *ApiService) GetCurrentLottery() (*view.Lottery, error) {
 	if err != nil {
 		lottery, err = as.lotteryRepository.GetCurrentLottery()
 
-		if err != nil {
+		if err != nil || reflect.ValueOf(lottery).IsNil() {
 			return nil, err
 		}
 
@@ -70,7 +71,7 @@ func (as *ApiService) GetLottery(number int) (*view.Lottery, error) {
 	if err != nil {
 		lottery, err = as.lotteryRepository.GetLottery(number)
 
-		if err != nil {
+		if err != nil || reflect.ValueOf(lottery).IsNil() {
 			return nil, err
 		}
 
@@ -87,7 +88,7 @@ func (as *ApiService) GetPollResults(lotteryId int) (*view.PollResults, error) {
 	if err != nil {
 		pollResults, err = as.pollRepository.GetPollResults(lotteryId)
 
-		if err != nil {
+		if err != nil || reflect.ValueOf(pollResults).IsNil() {
 			return nil, err
 		}
 
@@ -124,7 +125,7 @@ func (as *ApiService) GetMatchDetails(matchId int) (*view.MatchDetails, error) {
 	if err != nil {
 		match, err := as.matchRepository.GetMatch(matchId)
 
-		if err != nil {
+		if err != nil || reflect.ValueOf(match).IsNil() {
 			return nil, err
 		}
 

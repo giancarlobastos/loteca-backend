@@ -46,6 +46,11 @@ func (cs *CacheService) Get(key string) (interface{}, error) {
 }
 
 func (cs *CacheService) Put(key string, value interface{}) error {
+
+	if value == nil {
+		return nil
+	}
+
 	return cs.cache.Set(key, value, &store.Options{Expiration: time.Minute * 30})
 }
 
