@@ -20,23 +20,25 @@ type Lottery struct {
 }
 
 type Match struct {
-	Id              *int       `json:"id,omitempty"`
-	HomeId          *int       `json:"home_id,omitempty"`
-	HomeName        *string    `json:"home_name,omitempty"`
-	HomeLogo        *string    `json:"home_logo,omitempty"`
-	AwayId          *int       `json:"away_id,omitempty"`
-	AwayName        *string    `json:"away_name,omitempty"`
-	AwayLogo        *string    `json:"away_logo,omitempty"`
-	Stadium         *string    `json:"stadium,omitempty"`
-	StartAt         *time.Time `json:"start_at,omitempty"`
-	HomeScore       *int       `json:"home_score,omitempty"`
-	AwayScore       *int       `json:"away_score,omitempty"`
-	RoundNumber     *int       `json:"round_number,omitempty"`
-	RoundName       *string    `json:"round_name,omitempty"`
-	CompetitionId   *int       `json:"competition_id,omitempty"`
-	CompetitionName *string    `json:"competition_name,omitempty"`
-	Year            *int       `json:"year,omitempty"`
-	Order           *int       `json:"order,omitempty"`
+	Id               *int       `json:"id,omitempty"`
+	HomeId           *int       `json:"home_id,omitempty"`
+	HomeName         *string    `json:"home_name,omitempty"`
+	HomeAbbreviation *string    `json:"home_abbr,omitempty"`
+	HomeLogo         *string    `json:"home_logo,omitempty"`
+	AwayId           *int       `json:"away_id,omitempty"`
+	AwayName         *string    `json:"away_name,omitempty"`
+	AwayAbbreviation *string    `json:"away_abbr,omitempty"`
+	AwayLogo         *string    `json:"away_logo,omitempty"`
+	Stadium          *string    `json:"stadium,omitempty"`
+	StartAt          *time.Time `json:"start_at,omitempty"`
+	HomeScore        *int       `json:"home_score,omitempty"`
+	AwayScore        *int       `json:"away_score,omitempty"`
+	RoundNumber      *int       `json:"round_number,omitempty"`
+	RoundName        *string    `json:"round_name,omitempty"`
+	CompetitionId    *int       `json:"competition_id,omitempty"`
+	CompetitionName  *string    `json:"competition_name,omitempty"`
+	Year             *int       `json:"year,omitempty"`
+	Order            *int       `json:"order,omitempty"`
 }
 
 type MatchDetails struct {
@@ -83,7 +85,7 @@ type TeamStats struct {
 
 type Odd struct {
 	BookmakerId   int     `json:"bookmaker_id"`
-	BookmakerName string     `json:"bookmaker_name"`
+	BookmakerName string  `json:"bookmaker_name"`
 	Home          float32 `json:"home"`
 	Draw          float32 `json:"draw"`
 	Away          float32 `json:"away"`

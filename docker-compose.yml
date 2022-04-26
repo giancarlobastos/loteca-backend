@@ -29,7 +29,7 @@ services:
     links:
       - mysql
     ports:
-      - 8081:80
+      - 8085:80
     networks:
       - loteca-network
   backend:

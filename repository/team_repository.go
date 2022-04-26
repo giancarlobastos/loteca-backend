@@ -75,7 +75,7 @@ func (tr *TeamRepository) InsertStadium(stadium *domain.Stadium) error {
 
 func (tr *TeamRepository) GetTeams(country string) (*[]domain.Team, error) {
 	stmt, err := tr.db.Prepare(
-		`SELECT id, name, country
+		`SELECT id, name, coalesce(abbreviation, upper(substr(name, 1, 3))), country
 		 FROM team
 		 WHERE country = ?
 		 ORDER BY 2`)
@@ -100,7 +100,7 @@ func (tr *TeamRepository) GetTeams(country string) (*[]domain.Team, error) {
 	team := domain.Team{}
 
 	for rows.Next() {
-		err = rows.Scan(&team.Id, &team.Name, &team.Country)
+		err = rows.Scan(&team.Id, &team.Name, &team.Abbreviation, &team.Country)
 
 		if err != nil {
 			log.Printf("Error [GetTeams]: %v - [%v %v %v]", err, team.Id, team.Name, team.Country)

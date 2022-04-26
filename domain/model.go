@@ -5,11 +5,12 @@ import (
 )
 
 type Team struct {
-	Id      int      `json:",omitempty"`
-	Name    string   `json:",omitempty"`
-	Logo    string   `json:",omitempty"`
-	Country string   `json:",omitempty"`
-	Stadium *Stadium `json:",omitempty"`
+	Id           int      `json:",omitempty"`
+	Name         string   `json:",omitempty"`
+	Abbreviation string   `json:",omitempty"`
+	Logo         string   `json:",omitempty"`
+	Country      string   `json:",omitempty"`
+	Stadium      *Stadium `json:",omitempty"`
 }
 
 type Competition struct {
@@ -107,8 +108,8 @@ type User struct {
 }
 
 type Poll struct {
-	LotteryId int        `json:"lottery_id,omitempty"`
-	Votes     []Vote     `json:"votes,omitempty"`
+	LotteryId int    `json:"lottery_id,omitempty"`
+	Votes     []Vote `json:"votes,omitempty"`
 }
 
 type Vote struct {
