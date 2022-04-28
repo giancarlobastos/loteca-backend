@@ -84,6 +84,8 @@ CREATE TABLE `lottery_match` (
   `lottery_id` int,
   `match_id` int,
   `order` int,
+  `raffle` boolean NOT NULL DEFAULT FALSE,
+  `raffle_result` char,
   PRIMARY KEY (`lottery_id`, `match_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

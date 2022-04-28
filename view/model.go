@@ -42,6 +42,8 @@ type Match struct {
 	CompetitionName  *string    `json:"competition_name,omitempty"`
 	Year             *int       `json:"year,omitempty"`
 	Order            *int       `json:"order,omitempty"`
+	Raffle           bool       `json:"raffle"`
+	RaffleResult     *string    `json:"raffle_result,omitempty"`
 }
 
 type MatchDetails struct {
