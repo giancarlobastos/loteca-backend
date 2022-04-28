@@ -67,7 +67,7 @@ func (tr *BookmakerRepository) GetOdds(matchId int) (*[]domain.Odd, error) {
 		`SELECT bp.id, bp.name, mo.home_odds, mo.draw_odds, mo.away_odds
 		 FROM match_odds mo
 		 JOIN betting_platform bp ON mo.platform_id = bp.id 
-		 WHERE mo.match_id = ?
+		 WHERE mo.match_id = ? AND bp.preference IS NOT NULL
 		 ORDER BY isnull(bp.preference), bp.preference`)
 
 	odds := make([]domain.Odd, 0)

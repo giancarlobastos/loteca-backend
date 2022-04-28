@@ -20,12 +20,7 @@ func NewCompetitionRepository(db *sql.DB) *CompetitionRepository {
 
 func (cr *CompetitionRepository) InsertCompetitions(competitions *[]domain.Competition) error {
 	stmt, err := cr.db.Prepare(
-		`INSERT INTO competition(id, name, logo, type, country)
-		 VALUES(?, ?, ?, ?, ?)
-		 ON DUPLICATE KEY UPDATE 
-		 	logo = coalesce(VALUES(logo), logo), 
-			type = coalesce(VALUES(type), type), 
-			name = coalesce(VALUES(name), name)`)
+		`INSERT IGNORE INTO competition(id, name, logo, type, country) VALUES(?, ?, ?, ?, ?)`)
 
 	if err != nil {
 		log.Printf("Error [InsertCompetitions]: %v", err)
@@ -182,7 +177,7 @@ func (cr *CompetitionRepository) GetCompetition(competitionId int, year int) (*d
 }
 
 func (cr *CompetitionRepository) GetTeamStats(competitionId int, year int, teamId int) (*view.TeamStats, error) {
-	stmt, err := cr.db.Prepare(
+	return cr.getTeamStats(
 		`SELECT
 			count(*) M,
 			count(case when 
@@ -195,21 +190,66 @@ func (cr *CompetitionRepository) GetTeamStats(competitionId int, year int, teamI
 			sum(case when m.home_id = ? then m.home_score else m.away_score end) as GP,
 			sum(case when m.home_id = ? then m.away_score else m.home_score end) as GC
 	  	 FROM round r
-	  	 JOIN` + " `match` " + `m ON m.round_id = r.id
+	  	 JOIN`+" `match` "+`m ON m.round_id = r.id
 	  	 WHERE r.competition_id = ? AND r.year = ? 
-			AND (m.home_id = ? OR m.away_id = ?) AND m.home_score IS NOT NULL`)
+			AND (m.home_id = ? OR m.away_id = ?) AND m.home_score IS NOT NULL`,
+		teamId, teamId, teamId, teamId, teamId, teamId, competitionId, year, teamId, teamId)
+}
+
+func (cr *CompetitionRepository) GetTeamStatsHome(competitionId int, year int, teamId int) (*view.TeamStats, error) {
+	return cr.getTeamStats(
+		`SELECT
+			count(*) M,
+			count(case when 
+			  (m.home_score > m.away_score AND m.home_id = ?) OR
+		  	  (m.away_score > m.home_score AND m.away_id = ?) then 1 else null end) as W,
+			count(case when m.home_score = m.away_score then 1 else null end) as D,
+			count(case when 
+		  	  (m.home_score < m.away_score AND m.home_id = ?) OR
+		      (m.away_score < m.home_score AND m.away_id = ?) then 1 else null end) as L,
+			sum(case when m.home_id = ? then m.home_score else m.away_score end) as GP,
+			sum(case when m.home_id = ? then m.away_score else m.home_score end) as GC
+	  	 FROM round r
+	  	 JOIN`+" `match` "+`m ON m.round_id = r.id
+	  	 WHERE r.competition_id = ? AND r.year = ? 
+			AND m.home_id = ? AND m.home_score IS NOT NULL`,
+		teamId, teamId, teamId, teamId, teamId, teamId, competitionId, year, teamId)
+}
+
+func (cr *CompetitionRepository) GetTeamStatsAway(competitionId int, year int, teamId int) (*view.TeamStats, error) {
+	return cr.getTeamStats(
+		`SELECT
+			count(*) M,
+			count(case when 
+			  (m.home_score > m.away_score AND m.home_id = ?) OR
+		  	  (m.away_score > m.home_score AND m.away_id = ?) then 1 else null end) as W,
+			count(case when m.home_score = m.away_score then 1 else null end) as D,
+			count(case when 
+		  	  (m.home_score < m.away_score AND m.home_id = ?) OR
+		      (m.away_score < m.home_score AND m.away_id = ?) then 1 else null end) as L,
+			sum(case when m.home_id = ? then m.home_score else m.away_score end) as GP,
+			sum(case when m.home_id = ? then m.away_score else m.home_score end) as GC
+	  	 FROM round r
+	  	 JOIN`+" `match` "+`m ON m.round_id = r.id
+	  	 WHERE r.competition_id = ? AND r.year = ? 
+			AND m.away_id = ? AND m.home_score IS NOT NULL`,
+		teamId, teamId, teamId, teamId, teamId, teamId, competitionId, year, teamId)
+}
+
+func (cr *CompetitionRepository) getTeamStats(query string, args ...interface{}) (*view.TeamStats, error) {
+	stmt, err := cr.db.Prepare(query)
 
 	if err != nil {
-		log.Printf("Error [GetCompetition]: %v - [%v, %v]", err, competitionId, year)
+		log.Printf("Error [getTeamStats]: %v - [%v]", err, args)
 		return nil, err
 	}
 
 	defer stmt.Close()
 
-	rows, err := stmt.Query(teamId, teamId, teamId, teamId, teamId, teamId, competitionId, year, teamId, teamId)
+	rows, err := stmt.Query(args...)
 
 	if err != nil {
-		log.Printf("Error [GetTeamStats]: %v - [%v, %v %v]", err, competitionId, year, teamId)
+		log.Printf("Error [getTeamStats]: %v - [%v]", err, args)
 		return nil, err
 	}
 
@@ -225,7 +265,6 @@ func (cr *CompetitionRepository) GetTeamStats(competitionId int, year int, teamI
 			return nil, err
 		}
 
-		teamStats.TeamId = teamId
 		teamStats.SG = teamStats.GP - teamStats.GC
 	}
 

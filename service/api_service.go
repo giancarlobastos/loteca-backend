@@ -141,23 +141,28 @@ func (as *ApiService) GetMatchDetails(matchId int) (*view.MatchDetails, error) {
 		votes, totalVotes, _ := as.pollRepository.GetVotes(*match.Id)
 		odds, _ := as.getOdds(*match.Id)
 
-		teamsStats := make([]view.TeamStats, 0)
+		stats := make([]view.TeamStats, 0)
 		teamStats, _ := as.competitionRepository.GetTeamStats(*match.CompetitionId, *match.Year, *match.HomeId)
 
 		if teamStats != nil {
-			teamsStats = append(teamsStats, *teamStats)
+			stats = append(stats, *teamStats)
 		}
 
 		teamStats, _ = as.competitionRepository.GetTeamStats(*match.CompetitionId, *match.Year, *match.AwayId)
 
 		if teamStats != nil {
-			teamsStats = append(teamsStats, *teamStats)
+			stats = append(stats, *teamStats)
 		}
+
+		statsHome, _ := as.competitionRepository.GetTeamStatsHome(*match.CompetitionId, *match.Year, *match.HomeId)
+		statsAway, _ := as.competitionRepository.GetTeamStatsAway(*match.CompetitionId, *match.Year, *match.AwayId)
 
 		matchDetails = &view.MatchDetails{
 			Id:                         &matchId,
 			Match:                      match,
-			TeamStats:                  &teamsStats,
+			Stats:                      &stats,
+			StatsHome:                  statsHome,
+			StatsAway:                  statsAway,
 			H2H:                        h2h,
 			LastMatchesHome:            lastMatchesHome,
 			LastMatchesHomeCompetition: lastMatchesHomeCompetition,

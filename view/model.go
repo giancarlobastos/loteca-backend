@@ -44,7 +44,9 @@ type Match struct {
 type MatchDetails struct {
 	Id                         *int         `json:"id"`
 	Match                      *Match       `json:"match"`
-	TeamStats                  *[]TeamStats `json:"stats"`
+	Stats                      *[]TeamStats `json:"stats"`
+	StatsHome                  *TeamStats   `json:"stats_home"`
+	StatsAway                  *TeamStats   `json:"stats_away"`
 	H2H                        *[]Match     `json:"h2h"`
 	LastMatchesHome            *[]Match     `json:"last_matches_home"`
 	LastMatchesAway            *[]Match     `json:"last_matches_away"`
@@ -73,14 +75,13 @@ type Vote struct {
 }
 
 type TeamStats struct {
-	TeamId int `json:"team_id"`
-	M      int `json:"m"`
-	W      int `json:"w"`
-	D      int `json:"d"`
-	L      int `json:"l"`
-	GP     int `json:"gp"`
-	GC     int `json:"gc"`
-	SG     int `json:"sg"`
+	M  int `json:"m"`
+	W  int `json:"w"`
+	D  int `json:"d"`
+	L  int `json:"l"`
+	GP int `json:"gp"`
+	GC int `json:"gc"`
+	SG int `json:"sg"`
 }
 
 type Odd struct {
