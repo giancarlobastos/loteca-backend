@@ -16,6 +16,9 @@ type Lottery struct {
 	SpecialPrize     *float32   `json:"special_prize,omitempty"`
 	Accumulated      *bool      `json:"accumulated,omitempty"`
 	EndAt            *time.Time `json:"end_at,omitempty"`
+	ResultAt         *time.Time `json:"result_at,omitempty"`
+	EarliestMatchAt  *time.Time `json:"earliest_at,omitempty"`
+	LatestMatchAt    *time.Time `json:"latest_at,omitempty"`
 	Matches          *[]Match   `json:"matches,omitempty"`
 }
 

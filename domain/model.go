@@ -81,6 +81,7 @@ type Lottery struct {
 	SpecialPrize     float32    `json:",omitempty"`
 	Accumulated      bool       `json:",omitempty"`
 	EndAt            *time.Time `json:",omitempty"`
+	ResultAt         *time.Time `json:",omitempty"`
 	Matches          *[]Match   `json:",omitempty"`
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"time"
 
 	"github.com/giancarlobastos/loteca-backend/domain"
 	"github.com/giancarlobastos/loteca-backend/view"
@@ -26,7 +27,7 @@ func NewLotteryRepository(
 func (lr *LotteryRepository) GetCurrentLottery() (*view.Lottery, error) {
 	query :=
 		`SELECT id, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
-			side_prize_winners, special_prize, accumulated, end_at
+			side_prize_winners, special_prize, accumulated, end_at, result_at
 	     FROM lottery 
 		 WHERE enabled
 		 ORDER BY number DESC
@@ -38,7 +39,7 @@ func (lr *LotteryRepository) GetCurrentLottery() (*view.Lottery, error) {
 func (lr *LotteryRepository) GetLottery(number int) (*view.Lottery, error) {
 	query :=
 		`SELECT id, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
-			side_prize_winners, special_prize, accumulated, end_at
+			side_prize_winners, special_prize, accumulated, end_at, result_at
 	     FROM lottery 
 		 WHERE number = ? AND enabled`
 
@@ -56,8 +57,8 @@ func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lott
 	defer tx.Rollback()
 
 	stmt, err := lr.db.Prepare(
-		`INSERT IGNORE INTO lottery(id, name, number, estimated_prize, main_prize, special_prize, accumulated, end_at)
-		 VALUES(?, ?, ?, ?, ?, ?, ?, ?)`)
+		`INSERT IGNORE INTO lottery(id, name, number, estimated_prize, main_prize, special_prize, accumulated, end_at, result_at)
+		 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`)
 
 	if err != nil {
 		log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Number)
@@ -76,10 +77,10 @@ func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lott
 
 	defer matchStmt.Close()
 
-	_, err = stmt.Exec(lottery.Number, lottery.Name, lottery.Number, lottery.EstimatedPrize, lottery.MainPrize, lottery.SpecialPrize, lottery.Accumulated, lottery.EndAt)
+	_, err = stmt.Exec(lottery.Number, lottery.Name, lottery.Number, lottery.EstimatedPrize, lottery.MainPrize, lottery.SpecialPrize, lottery.Accumulated, lottery.EndAt, lottery.ResultAt)
 
 	if err != nil {
-		log.Printf("Error [CreateLottery]: %v - [%v, %v, %v, %v, %v, %v, %v]", err, lottery.Name, lottery.Number, lottery.EstimatedPrize, lottery.MainPrize, lottery.SpecialPrize, lottery.Accumulated, lottery.EndAt)
+		log.Printf("Error [CreateLottery]: %v - [%v, %v, %v, %v, %v, %v, %v, %v]", err, lottery.Name, lottery.Number, lottery.EstimatedPrize, lottery.MainPrize, lottery.SpecialPrize, lottery.Accumulated, lottery.EndAt, lottery.ResultAt)
 		return nil, err
 	}
 
@@ -125,7 +126,7 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 
 	if rows.Next() {
 		err = rows.Scan(&lottery.Id, &lottery.Number, &lottery.EstimatedPrize, &lottery.MainPrize, &lottery.MainPrizeWinners,
-			&lottery.SidePrize, &lottery.SidePrizeWinners, &lottery.SpecialPrize, &lottery.Accumulated, &lottery.EndAt)
+			&lottery.SidePrize, &lottery.SidePrizeWinners, &lottery.SpecialPrize, &lottery.Accumulated, &lottery.EndAt, &lottery.ResultAt)
 
 		if err != nil {
 			log.Printf("Error [GetCompetition]: %v", err)
@@ -133,6 +134,22 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 		}
 
 		lottery.Matches, _ = lr.matchRepository.GetLotteryMatches(*lottery.Id)
+		
+		earliestMatchAt := time.Unix(99999999999999, 0)
+		latestMatchAt := time.Time{}
+		
+		for _, match := range *lottery.Matches {
+			if (*match.StartAt).Before(earliestMatchAt) {
+				earliestMatchAt = *match.StartAt
+			}
+
+			if (*match.StartAt).After(latestMatchAt) {
+				latestMatchAt = *match.StartAt
+			}
+		}
+
+		lottery.EarliestMatchAt = &earliestMatchAt
+		lottery.LatestMatchAt = &latestMatchAt
 	}
 
 	return &lottery, err
