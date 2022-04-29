@@ -49,7 +49,7 @@ func (lr *LotteryRepository) GetLottery(number int) (*view.Lottery, error) {
 func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lottery, error) {
 	tx, err := lr.db.BeginTx(context.Background(), nil)
 
-	if err !=nil {
+	if err != nil {
 		log.Printf("Error [CreateLottery]: %v", err)
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (lr *LotteryRepository) CreateLottery(lottery domain.Lottery) (*domain.Lott
 		log.Printf("Error [CreateLottery]: %v - [%v]", err, lottery.Number)
 		return nil, err
 	}
-	
+
 	defer stmt.Close()
 
 	matchStmt, err := lr.db.Prepare(
@@ -134,10 +134,10 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 		}
 
 		lottery.Matches, _ = lr.matchRepository.GetLotteryMatches(*lottery.Id)
-		
+
 		earliestMatchAt := time.Unix(99999999999999, 0)
 		latestMatchAt := time.Time{}
-		
+
 		for _, match := range *lottery.Matches {
 			if (*match.StartAt).Before(earliestMatchAt) {
 				earliestMatchAt = *match.StartAt
@@ -150,7 +150,44 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 
 		lottery.EarliestMatchAt = &earliestMatchAt
 		lottery.LatestMatchAt = &latestMatchAt
+		lottery.LotteryIds, _ = lr.getLotteryIdList()
 	}
 
 	return &lottery, err
+}
+
+func (lr *LotteryRepository) getLotteryIdList() (*[]int, error) {
+	stmt, err := lr.db.Prepare(`SELECT id FROM lottery WHERE enabled ORDER BY id DESC`)
+
+	if err != nil {
+		log.Printf("Error [getLotteryIdList]: %v", err)
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+	ids := make([]int, 0)
+
+	if err != nil {
+		log.Printf("Error [getLotteryIdList]: %v", err)
+		return &ids, err
+	}
+
+	defer rows.Close()
+
+	var id int
+
+	for rows.Next() {
+		err = rows.Scan(&id)
+
+		if err != nil {
+			log.Printf("Error: %v", err)
+			continue
+		}
+
+		ids = append(ids, id)
+	}
+
+	return &ids, nil
 }

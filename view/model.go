@@ -20,6 +20,7 @@ type Lottery struct {
 	EarliestMatchAt  *time.Time `json:"earliest_at,omitempty"`
 	LatestMatchAt    *time.Time `json:"latest_at,omitempty"`
 	Matches          *[]Match   `json:"matches,omitempty"`
+	LotteryIds       *[]int     `json:"lottery_ids,omitempty"`
 }
 
 type Match struct {
