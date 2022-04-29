@@ -146,7 +146,7 @@ func (mr *MatchRepository) GetNextMatches(matchId int, teamId int, after time.Ti
 		 JOIN team t1 ON m.home_id = t1.id
 		 JOIN team t2 ON m.away_id = t2.id
 		 LEFT JOIN stadium s ON m.stadium_id = s.id
-		 WHERE (t1.id = ? OR t2.id = ?) AND m.start_at > ? AND m.home_score IS NULL AND m.id != ?
+		 WHERE (t1.id = ? OR t2.id = ?) AND m.start_at > ? AND m.id != ?
 		 ORDER BY m.start_at
 		 LIMIT 5`, &teamId, &teamId, &after, &matchId)
 }
