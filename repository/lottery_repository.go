@@ -157,7 +157,7 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 }
 
 func (lr *LotteryRepository) getLotteryIdList() (*[]int, error) {
-	stmt, err := lr.db.Prepare(`SELECT id FROM lottery WHERE enabled ORDER BY id DESC`)
+	stmt, err := lr.db.Prepare(`SELECT id FROM lottery WHERE enabled ORDER BY id`)
 
 	if err != nil {
 		log.Printf("Error [getLotteryIdList]: %v", err)
