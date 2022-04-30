@@ -45,9 +45,11 @@ services:
   nginx-server:
     image: nginx:1.13
     ports: 
-        - "8080:80"
+        - "443:443"
     volumes: 
         - './nginx.conf:/etc/nginx/nginx.conf'
+        - './server.crt:/etc/nginx/certs/server.crt'
+        - './server.key:/etc/nginx/certs/server.key'
     networks: 
         - "loteca-network"
     depends_on: 
