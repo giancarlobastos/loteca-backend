@@ -13,7 +13,7 @@ type FacebookClient struct {
 
 func NewFacebookClient() *FacebookClient {
 	return &FacebookClient{
-		app: fb.New("4735477359823746", "b760602140f2c66b01c2f4abeb674cbf"),
+		app: fb.New("358261192947745", "2ac95306fa7d072d11d40e4511867003"),
 	}
 }
 

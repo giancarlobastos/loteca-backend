@@ -22,3 +22,20 @@ where
 order by 1, 2
 
 -- https://stackoverflow.com/questions/6648512/scheduling-algorithm-for-a-round-robin-tournament
+
+SET FOREIGN_KEY_CHECKS=0;    
+TRUNCATE TABLE loteca.betting_platform;
+TRUNCATE TABLE loteca.competition;
+TRUNCATE TABLE loteca.group;
+TRUNCATE TABLE loteca.lottery;
+TRUNCATE TABLE loteca.lottery_match;
+TRUNCATE TABLE loteca.lottery_poll;
+TRUNCATE TABLE loteca.match;
+TRUNCATE TABLE loteca.match_odds;
+TRUNCATE TABLE loteca.round;
+TRUNCATE TABLE loteca.season;
+TRUNCATE TABLE loteca.stadium;
+TRUNCATE TABLE loteca.team;
+TRUNCATE TABLE loteca.team_group;
+TRUNCATE TABLE loteca.user;
+SET FOREIGN_KEY_CHECKS=1;
