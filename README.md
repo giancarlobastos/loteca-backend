@@ -1,13 +1,33 @@
-	teamRepository := repository.NewTeamRepository(database)
-	competitionRepository := repository.NewCompetitionRepository(database)
-	matchRepository := repository.NewMatchRepository(database)
-	apiClient := client.NewApiFootballClient()
+### teams
+https://loteca.click/manager/Bolivia/teams
+https://loteca.click/manager/Argentina/teams
+https://loteca.click/manager/England/teams
+https://loteca.click/manager/Spain/teams
+https://loteca.click/manager/Paraguay/teams
+https://loteca.click/manager/Colombia/teams
+https://loteca.click/manager/Uruguay/teams
+https://loteca.click/manager/Ecuador/teams
+https://loteca.click/manager/Peru/teams
+https://loteca.click/manager/Chile/teams
+https://loteca.click/manager/Venezuela/teams<br>
+`SELECT * FROM loteca.team WHERE country = 'Ecuador'`
 
-	// _ := service.NewUpdateService(teamRepository, competitionRepository, apiClient)
-	updateService := service.NewUpdateService(teamRepository, competitionRepository, matchRepository, apiClient)
-	// updateService.ImportCompetitionsAndSeasons()
-	// updateService.ImportTeamsAndStadiums()
-	updateService.ImportMatches("Brazil", 2020, true)
+### competition, season
+https://loteca.click/manager/World/competitions
+https://loteca.click/manager/Brazil/competitions<br>
+`SELECT * FROM loteca.season WHERE year = 2022`
 
-	defer destroy()
-	//image.ConvertSvgToPngWithChrome("https://s.glbimg.com/es/sde/f/organizacoes/2020/02/12/botsvg.svg", "./assets/test.png")
+### matches
+#### libertadores
+https://loteca.click/manager/World/competitions/13/2022/matches
+
+#### sul-americana
+https://loteca.click/manager/World/competitions/11/2022/matches
+
+#### champions league
+https://loteca.click/manager/World/competitions/2/2021/matches
+#### serie b
+https://loteca.click/manager/Brazil/competitions/72/2022/matches
+
+### get matches
+https://loteca.click/manager/World/competitions/2/2021/matches

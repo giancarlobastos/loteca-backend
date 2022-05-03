@@ -41,7 +41,7 @@ func (lr *LotteryRepository) GetLottery(number int) (*view.Lottery, error) {
 		`SELECT id, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
 			side_prize_winners, special_prize, accumulated, end_at, result_at
 	     FROM lottery 
-		 WHERE number = ? AND enabled`
+		 WHERE number = ?`
 
 	return lr.getLottery(query, number)
 }

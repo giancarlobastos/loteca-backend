@@ -129,26 +129,20 @@ func (us *UpdateService) GetMatches(competitionId int, year int) (*[]view.Match,
 }
 
 func (us *UpdateService) ImportMatches(competitionId int, year int) error {
-	competition, err := us.competitionRepository.GetCompetition(competitionId, year)
+	response, err := us.apiClient.GetFixtures(competitionId, year)
 
 	if err != nil {
+		log.Printf("Error [ImportMatches]: %v - [%v, %v]", err, competitionId, year)
+	}
+
+	competitions, err := us.getCompetitionAndMatches(response)
+
+	if err != nil {
+		log.Printf("Error [ImportMatches]: %v - [%v, %v]", err, competitionId, year)
 		return err
 	}
 
-	for _, season := range *competition.Seasons {
-		rounds, err := us.getRoundsWithMatches(competition.Id, season.Year)
-
-		if err != nil {
-			return err
-		}
-
-		err = us.matchRepository.InsertRoundsAndMatches(competition.Id, season.Year, rounds)
-
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return us.insertCompetitionAndMatches(competitions)
 }
 
 func (us *UpdateService) ImportHeadToHead(homeId int, awayId int) error {
@@ -378,60 +372,4 @@ func (us *UpdateService) getCompetitionAndMatches(fixtures *client.GetFixturesRe
 	}
 
 	return &competitions, nil
-}
-
-func (us *UpdateService) getRoundsWithMatches(competitionId int, year int) (*[]domain.Round, error) {
-	response, err := us.apiClient.GetFixtures(competitionId, year)
-
-	if err != nil {
-		log.Printf("Error [getRoundsWithMatches]: %v - [%v, %v]", err, competitionId, year)
-		return &[]domain.Round{}, err
-	}
-
-	rounds := make([]domain.Round, 0)
-
-	var roundName string
-	var round domain.Round
-
-	for _, result := range response.Results {
-		if result.League.Round != roundName {
-			roundName = result.League.Round
-			matches := make([]domain.Match, 0)
-
-			round = domain.Round{
-				Name:    roundName,
-				Matches: &matches,
-			}
-
-			rounds = append(rounds, round)
-		}
-
-		startAt, err := time.Parse(time.RFC3339, result.Fixture.DateAndTime)
-
-		if err != nil {
-			log.Printf("Error [getRoundsWithMatches]: %v - [%v, %v, %v]", err, result.League.Id, result.League.Season, result.Fixture.DateAndTime)
-			continue
-		}
-
-		match := domain.Match{
-			Id: result.Fixture.Id,
-			Home: &domain.Team{
-				Id: result.Teams.Home.Id,
-			},
-			Away: &domain.Team{
-				Id: result.Teams.Away.Id,
-			},
-			Stadium: &domain.Stadium{
-				Id:   result.Fixture.Venue.Id,
-				Name: result.Fixture.Venue.Name,
-			},
-			StartAt:   startAt,
-			HomeScore: result.Goals.Home,
-			AwayScore: result.Goals.Away,
-		}
-
-		*round.Matches = append(*round.Matches, match)
-	}
-
-	return &rounds, nil
 }
