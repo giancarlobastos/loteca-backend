@@ -43,19 +43,26 @@ services:
     networks:
       - loteca-network
   nginx-server:
-    image: nginx:1.13
-    ports: 
-        - "443:443"
-        - "80:80"
+    image: nginx:1.15-alpine
+    ports:
+      - "80:80" 
+      - "443:443"
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
     volumes: 
-        - './nginx.conf:/etc/nginx/nginx.conf'
-        - './server.crt:/etc/nginx/certs/server.crt'
-        - './server.key:/etc/nginx/certs/server.key'
-        - './app-ads.txt:/www/data/app-ads.txt'
+      - './nginx.conf:/etc/nginx/nginx.conf'
+      - './app-ads.txt:/www/data/app-ads.txt'
+      - './data/certbot/conf:/etc/letsencrypt'
+      - './data/certbot/www:/var/www/certbot'
     networks: 
-        - "loteca-network"
+      - "loteca-network"
     depends_on: 
-        - backend
+      - backend
+  certbot:
+    image: certbot/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    volumes:
+      - './data/certbot/conf:/etc/letsencrypt'
+      - './data/certbot/www:/var/www/certbot'
 volumes:
   loteca-mysql:
 networks:
