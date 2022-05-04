@@ -16,8 +16,8 @@ type CacheService struct {
 func NewCacheService() *CacheService {
 	ristrettoCache, err := ristretto.NewCache(
 		&ristretto.Config{
-			NumCounters: 2000,
-			MaxCost:     200,
+			NumCounters: 200000000,
+			MaxCost:     20000000,
 			BufferItems: 64,
 		})
 
