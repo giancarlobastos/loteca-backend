@@ -33,6 +33,7 @@ func (router *Router) Start(addr string) {
 	r := mux.NewRouter()
 	r.HandleFunc("/lotteries/current", router.getCurrentLottery).Methods("GET")
 	r.HandleFunc("/lotteries/{number}", router.getLottery).Methods("GET")
+	r.HandleFunc("/live/{lotteryId}", router.getLiveScores).Methods("GET")
 	r.HandleFunc("/matches/{matchId}", router.getMatchDetails).Methods("GET")
 	r.HandleFunc("/poll/{lotteryId}", router.getPollResults).Methods("GET")
 	r.HandleFunc("/poll/{lotteryId}", router.vote).Methods("POST")
@@ -53,7 +54,7 @@ func (router *Router) login(w http.ResponseWriter, r *http.Request) {
 	defer handleErrors(w, r)
 
 	token := r.Header.Get("Token")
-	
+
 	extendedToken, err := router.apiService.Login(token)
 
 	if err != nil {
@@ -100,6 +101,22 @@ func (router *Router) getLottery(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, lottery)
+}
+
+func (router *Router) getLiveScores(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
+	vars := mux.Vars(r)
+	lotteryId, _ := strconv.Atoi(vars["lotteryId"])
+
+	scores, err := router.apiService.GetLiveScores(lotteryId)
+
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, scores)
 }
 
 func (router *Router) getMatchDetails(w http.ResponseWriter, r *http.Request) {

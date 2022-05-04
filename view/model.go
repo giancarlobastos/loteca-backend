@@ -97,3 +97,14 @@ type Odd struct {
 	Draw          float32 `json:"draw"`
 	Away          float32 `json:"away"`
 }
+
+type LiveScore struct {
+	Id        *int    `json:"id,omitempty"`
+	Order     *int    `json:"order,omitempty"`
+	HomeScore *int    `json:"home_score,omitempty"`
+	AwayScore *int    `json:"away_score,omitempty"`
+	Live      bool    `json:"live,omitempty"`
+	HalfTime  bool    `json:"half_time,omitempty"`
+	Status    *string `json:"status,omitempty"`
+	Elapsed   *int    `json:"elapsed,omitempty"`
+}

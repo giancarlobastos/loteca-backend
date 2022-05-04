@@ -275,3 +275,46 @@ func (mr *MatchRepository) getMatches(query string, args ...interface{}) (*[]vie
 
 	return &matches, err
 }
+
+func (mr *MatchRepository) GetLiveScores(lotteryId int) (*[]view.LiveScore, error) {
+	stmt, err := mr.db.Prepare(		
+		`SELECT m.id, m.home_score, m.away_score, lm.order
+		 FROM lottery_match lm
+		 JOIN`+" `match` "+`m ON  lm.match_id = m.id
+		 WHERE lm.lottery_id = ?
+		 ORDER BY lm.order`)
+
+	scores := make([]view.LiveScore, 0)
+
+	if err != nil {
+		log.Printf("Error [getLiveScores]: %v - [%v]", err, lotteryId)
+		return &scores, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(lotteryId)
+
+	if err != nil {
+		log.Printf("Error [getLiveScores]: %v - [%v]", err, lotteryId)
+		return &scores, err
+	}
+
+	defer rows.Close()
+
+	var score view.LiveScore
+
+	for rows.Next() {
+		score = view.LiveScore{}
+		err = rows.Scan(&score.Id, &score.HomeScore, &score.AwayScore, &score.Order)
+
+		if err != nil {
+			log.Printf("Error: %v", err)
+			continue
+		}
+
+		scores = append(scores, score)
+	}
+
+	return &scores, err
+}

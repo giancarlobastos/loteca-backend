@@ -81,6 +81,23 @@ func (as *ApiService) GetLottery(number int) (*view.Lottery, error) {
 	return lottery.(*view.Lottery), nil
 }
 
+func (as *ApiService) GetLiveScores(lotteryId int) (*[]view.LiveScore, error) {
+	key := fmt.Sprint("live_", lotteryId)
+	scores, err := as.cacheService.Get(key)
+
+	if err != nil {
+		scores, err = as.matchRepository.GetLiveScores(lotteryId)
+
+		if err != nil || reflect.ValueOf(scores).IsNil() {
+			return nil, err
+		}
+
+		as.cacheService.Put(key, scores)
+	}
+
+	return scores.(*[]view.LiveScore), nil
+}
+
 func (as *ApiService) GetPollResults(lotteryId int) (*view.PollResults, error) {
 	pollResults, err := as.pollRepository.GetPollResults(lotteryId)
 
