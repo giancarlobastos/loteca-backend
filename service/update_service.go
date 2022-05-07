@@ -348,8 +348,8 @@ func (us *UpdateService) getCompetitionAndMatches(fixtures *client.GetFixturesRe
 				City: result.Fixture.Venue.City,
 			},
 			StartAt:   startAt,
-			HomeScore: result.Goals.Home,
-			AwayScore: result.Goals.Away,
+			HomeScore: result.Score.FullTime.Home,
+			AwayScore: result.Score.FullTime.Away,
 		}
 
 		competition := domain.Competition{
