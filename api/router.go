@@ -46,6 +46,7 @@ func (router *Router) Start(addr string) {
 	r.HandleFunc("/manager/{country}/competitions/{competitionId}/{year}/matches", router.importMatches).Methods("POST")
 	r.HandleFunc("/manager/lotteries", router.createLottery).Methods("POST")
 	r.HandleFunc("/manager/odds/{matchId}", router.importOdds).Methods("POST")
+	r.HandleFunc("/manager/h2h/{homeId}/{awayId}", router.h2h).Methods("POST")
 	r.Use(router.authenticationMiddleware.Middleware)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
@@ -286,6 +287,22 @@ func (router *Router) importOdds(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	matchId, _ := strconv.Atoi(vars["matchId"])
 	err := router.updateService.ImportOdds(matchId)
+
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, nil)
+}
+
+func (router *Router) h2h(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
+	vars := mux.Vars(r)
+	homeId, _ := strconv.Atoi(vars["homeId"])
+	awayId, _ := strconv.Atoi(vars["awayId"])
+	err := router.updateService.ImportHeadToHead(homeId, awayId)
 
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, err.Error())
