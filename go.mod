@@ -3,6 +3,8 @@ module github.com/giancarlobastos/loteca-backend
 go 1.17
 
 require (
+	firebase.google.com/go v3.13.0+incompatible
+	firebase.google.com/go/v4 v4.8.0 // indirect
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/antchfx/htmlquery v1.2.4 // indirect
@@ -31,8 +33,9 @@ require (
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410 // indirect
-	golang.org/x/net v0.0.0-20211109214657-ef0fda0de508
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/text v0.3.7 // indirect
+	google.golang.org/api v0.73.0
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 )

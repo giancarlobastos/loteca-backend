@@ -53,12 +53,14 @@ func init() {
 
 	apiClient := client.NewApiFootballClient()
 	facebookClient := client.NewFacebookClient()
+	firebaseClient := client.NewFirebaseClient()
 
 	cacheService := service.NewCacheService()
 	updateService := service.NewUpdateService(teamRepository, competitionRepository, matchRepository, bookmakerRepository, apiClient)
 	apiService := service.NewApiService(userRepository, lotteryRepository, pollRepository, matchRepository, bookmakerRepository, competitionRepository, updateService, facebookClient, cacheService)
+	notificationService := service.NewNotificationService(firebaseClient)
 
-	router = api.NewRouter(apiService, updateService)
+	router = api.NewRouter(apiService, updateService, notificationService)
 }
 
 func destroy() {
