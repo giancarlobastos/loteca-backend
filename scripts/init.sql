@@ -62,7 +62,10 @@ CREATE TABLE `match` (
   `stadium_id` int,
   `start_at` timestamp,
   `home_score` int,
-  `away_score` int
+  `away_score` int,
+  `ended` boolean,
+  `status` varchar(10),
+  `elapsed_time` int
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `lottery` (

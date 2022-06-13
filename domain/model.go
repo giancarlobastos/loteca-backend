@@ -24,14 +24,17 @@ type Competition struct {
 }
 
 type Match struct {
-	Id        int       `json:",omitempty"`
-	Home      *Team     `json:",omitempty"`
-	Away      *Team     `json:",omitempty"`
-	Stadium   *Stadium  `json:",omitempty"`
-	StartAt   time.Time `json:",omitempty"`
-	HomeScore *int      `json:",omitempty"`
-	AwayScore *int      `json:",omitempty"`
-	Order     int       `json:",omitempty"`
+	Id          int       `json:",omitempty"`
+	Home        *Team     `json:",omitempty"`
+	Away        *Team     `json:",omitempty"`
+	Stadium     *Stadium  `json:",omitempty"`
+	StartAt     time.Time `json:",omitempty"`
+	HomeScore   *int      `json:",omitempty"`
+	AwayScore   *int      `json:",omitempty"`
+	Order       int       `json:",omitempty"`
+	Ended       bool      `json:",omitempty"`
+	Status      string    `json:",omitempty"`
+	ElapsedTime int       `json:",omitempty"`
 }
 
 type Round struct {

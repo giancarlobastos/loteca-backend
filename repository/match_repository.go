@@ -31,9 +31,10 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, r
 	defer tx.Rollback()
 
 	stmt, err := mr.db.Prepare(
-		`INSERT INTO ` + "`match`" + `(id, round_id, home_id, away_id, stadium_id, start_at, home_score, away_score)
-		 VALUES(?, (SELECT r.id FROM round r WHERE r.name = ? AND r.competition_id = ? AND r.year = ?), ?, ?, ?, ?, ?, ?)
-		 ON DUPLICATE KEY UPDATE round_id = VALUES(round_id), start_at = VALUES(start_at), home_score = VALUES(home_score), away_score = VALUES(away_score), stadium_id = VALUES(stadium_id) `)
+		`INSERT INTO ` + "`match`" + `(id, round_id, home_id, away_id, stadium_id, start_at, home_score, away_score, ended, status, elapsed_time)
+		 VALUES(?, (SELECT r.id FROM round r WHERE r.name = ? AND r.competition_id = ? AND r.year = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		 ON DUPLICATE KEY UPDATE round_id = VALUES(round_id), start_at = VALUES(start_at), home_score = VALUES(home_score), away_score = VALUES(away_score), 
+		   stadium_id = VALUES(stadium_id), ended = COALESCE(VALUES(ended), FALSE), status = VALUES(status), elapsed_time = VALUES(elapsed_time)`)
 
 	if err != nil {
 		log.Printf("Error [InsertRoundsAndMatches]: %v - [%v %v]", err, competitionId, year)
@@ -61,7 +62,7 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, r
 		}
 
 		for _, match := range *round.Matches {
-			_, err = stmt.Exec(match.Id, round.Name, competitionId, year, match.Home.Id, match.Away.Id, match.Stadium.Id, match.StartAt, match.HomeScore, match.AwayScore)
+			_, err = stmt.Exec(match.Id, round.Name, competitionId, year, match.Home.Id, match.Away.Id, match.Stadium.Id, match.StartAt, match.HomeScore, match.AwayScore, match.Ended, match.Status, match.ElapsedTime)
 
 			if err != nil {
 				log.Printf("Error [InsertRoundsAndMatches]: %v - [%v, %v, %v, %v, %v, %v, %v, %v]", err, match.Id, round.Name, match.Home.Id, match.Away.Id, match.Stadium, match.StartAt, match.HomeScore, match.AwayScore)
@@ -79,7 +80,7 @@ func (mr *MatchRepository) GetMatch(matchId int) (*view.Match, error) {
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, 
 			t1.id, t1.name, coalesce(t1.abbreviation, upper(substr(t1.name, 1, 3))), t1.logo, 
 			t2.id, t2.name, coalesce(t2.abbreviation, upper(substr(t2.name, 1, 3))), t2.logo, 
-			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL
+			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL, COALESCE(m.ended, FALSE), m.status, m.elapsed_time 
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -105,7 +106,7 @@ func (mr *MatchRepository) GetH2HMatches(homeId int, awayId int, before time.Tim
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, 
 			t1.id, t1.name, coalesce(t1.abbreviation, upper(substr(t1.name, 1, 3))), t1.logo, 
 			t2.id, t2.name, coalesce(t2.abbreviation, upper(substr(t2.name, 1, 3))), t2.logo, 
-			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL
+			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL, COALESCE(m.ended, FALSE), m.status, m.elapsed_time
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -122,7 +123,7 @@ func (mr *MatchRepository) GetLastMatches(teamId int, before time.Time) (*[]view
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, 
 			t1.id, t1.name, coalesce(t1.abbreviation, upper(substr(t1.name, 1, 3))), t1.logo, 
 			t2.id, t2.name, coalesce(t2.abbreviation, upper(substr(t2.name, 1, 3))), t2.logo, 
-			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL
+			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL, COALESCE(m.ended, FALSE), m.status, m.elapsed_time
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -139,7 +140,7 @@ func (mr *MatchRepository) GetNextMatches(matchId int, teamId int, after time.Ti
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, 
 			t1.id, t1.name, coalesce(t1.abbreviation, upper(substr(t1.name, 1, 3))), t1.logo, 
 			t2.id, t2.name, coalesce(t2.abbreviation, upper(substr(t2.name, 1, 3))), t2.logo, 
-			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL
+			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL, COALESCE(m.ended, FALSE), m.status, m.elapsed_time
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -156,7 +157,7 @@ func (mr *MatchRepository) GetLastCompetitionMatches(competitionId int, year int
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, 
 			t1.id, t1.name, coalesce(t1.abbreviation, upper(substr(t1.name, 1, 3))), t1.logo, 
 			t2.id, t2.name, coalesce(t2.abbreviation, upper(substr(t2.name, 1, 3))), t2.logo, 
-			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL
+			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL, COALESCE(m.ended, FALSE), m.status, m.elapsed_time
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -173,7 +174,7 @@ func (mr *MatchRepository) GetLastCompetitionHomeMatches(competitionId int, year
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, 
 			t1.id, t1.name, coalesce(t1.abbreviation, upper(substr(t1.name, 1, 3))), t1.logo, 
 			t2.id, t2.name, coalesce(t2.abbreviation, upper(substr(t2.name, 1, 3))), t2.logo, 
-			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL
+			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL, COALESCE(m.ended, FALSE), m.status, m.elapsed_time
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -190,7 +191,7 @@ func (mr *MatchRepository) GetLastCompetitionAwayMatches(competitionId int, year
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, 
 			t1.id, t1.name, coalesce(t1.abbreviation, upper(substr(t1.name, 1, 3))), t1.logo, 
 			t2.id, t2.name, coalesce(t2.abbreviation, upper(substr(t2.name, 1, 3))), t2.logo, 
-			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL
+			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL, COALESCE(m.ended, FALSE), m.status, m.elapsed_time
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -207,7 +208,7 @@ func (mr *MatchRepository) GetMatches(competitionId int, year int) (*[]view.Matc
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, 
 			t1.id, t1.name, coalesce(t1.abbreviation, upper(substr(t1.name, 1, 3))), t1.logo, 
 			t2.id, t2.name, coalesce(t2.abbreviation, upper(substr(t2.name, 1, 3))), t2.logo, 
-			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL
+			s.name, m.start_at, m.home_score, m.away_score, NULL, FALSE, NULL, COALESCE(m.ended, FALSE), m.status, m.elapsed_time
 		 FROM`+" `match` "+`m
 		 JOIN round r ON m.round_id = r.id
 		 JOIN competition c ON r.competition_id = c.id
@@ -223,7 +224,8 @@ func (mr *MatchRepository) GetLotteryMatches(lotteryId int) (*[]view.Match, erro
 		`SELECT m.id, r.number, r.name, r.year, c.id, c.name, 
 			t1.id, t1.name, coalesce(t1.abbreviation, upper(substr(t1.name, 1, 3))), t1.logo, 
 			t2.id, t2.name, coalesce(t2.abbreviation, upper(substr(t2.name, 1, 3))), t2.logo, 
-			s.name, m.start_at, m.home_score, m.away_score, lm.order, lm.raffle, lm.raffle_result
+			s.name, m.start_at, m.home_score, m.away_score, lm.order, lm.raffle, lm.raffle_result, 
+			COALESCE(m.ended, FALSE), m.status, m.elapsed_time
 		 FROM lottery_match lm
 		 JOIN`+" `match` "+`m ON  lm.match_id = m.id
 		 JOIN round r ON m.round_id = r.id
@@ -263,7 +265,8 @@ func (mr *MatchRepository) getMatches(query string, args ...interface{}) (*[]vie
 		err = rows.Scan(&match.Id, &match.RoundNumber, &match.RoundName, &match.Year, &match.CompetitionId, &match.CompetitionName,
 			&match.HomeId, &match.HomeName, &match.HomeAbbreviation, &match.HomeLogo, 
 			&match.AwayId, &match.AwayName, &match.AwayAbbreviation, &match.AwayLogo, 
-			&match.Stadium, &match.StartAt, &match.HomeScore, &match.AwayScore, &match.Order, &match.Raffle, &match.RaffleResult)
+			&match.Stadium, &match.StartAt, &match.HomeScore, &match.AwayScore, &match.Order, 
+			&match.Raffle, &match.RaffleResult, &match.Ended, &match.Status, &match.ElapsedTime)
 
 		if err != nil {
 			log.Printf("Error: %v", err)
@@ -278,7 +281,7 @@ func (mr *MatchRepository) getMatches(query string, args ...interface{}) (*[]vie
 
 func (mr *MatchRepository) GetLiveScores(lotteryId int) (*[]view.LiveScore, error) {
 	stmt, err := mr.db.Prepare(		
-		`SELECT m.id, m.home_score, m.away_score, lm.order
+		`SELECT m.id, m.home_score, m.away_score, m.start_at, m.status, m.elapsed_time, lm.order
 		 FROM lottery_match lm
 		 JOIN`+" `match` "+`m ON  lm.match_id = m.id
 		 WHERE lm.lottery_id = ?
@@ -306,7 +309,7 @@ func (mr *MatchRepository) GetLiveScores(lotteryId int) (*[]view.LiveScore, erro
 
 	for rows.Next() {
 		score = view.LiveScore{}
-		err = rows.Scan(&score.Id, &score.HomeScore, &score.AwayScore, &score.Order)
+		err = rows.Scan(&score.Id, &score.HomeScore, &score.AwayScore, &score.StartAt, &score.Status, &score.Elapsed, &score.Order)
 
 		if err != nil {
 			log.Printf("Error: %v", err)

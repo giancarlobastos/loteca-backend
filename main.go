@@ -7,6 +7,7 @@ import (
 
 	"github.com/giancarlobastos/loteca-backend/api"
 	"github.com/giancarlobastos/loteca-backend/client"
+	"github.com/giancarlobastos/loteca-backend/daemon"
 	"github.com/giancarlobastos/loteca-backend/repository"
 	"github.com/giancarlobastos/loteca-backend/service"
 	_ "github.com/go-sql-driver/mysql"
@@ -59,6 +60,9 @@ func init() {
 	updateService := service.NewUpdateService(teamRepository, competitionRepository, matchRepository, bookmakerRepository, apiClient)
 	apiService := service.NewApiService(userRepository, lotteryRepository, pollRepository, matchRepository, bookmakerRepository, competitionRepository, updateService, facebookClient, cacheService)
 	notificationService := service.NewNotificationService(firebaseClient)
+
+	liveScoreDaemon := daemon.NewLiveScoreDaemon(apiClient, updateService, cacheService, lotteryRepository, notificationService)
+	go liveScoreDaemon.CheckLiveScores()
 
 	router = api.NewRouter(apiService, updateService, notificationService)
 }

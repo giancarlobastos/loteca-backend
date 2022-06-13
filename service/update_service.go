@@ -145,6 +145,29 @@ func (us *UpdateService) ImportMatches(competitionId int, year int) error {
 	return us.insertCompetitionAndMatches(competitions)
 }
 
+func (us *UpdateService) UpdateMatches(matches *[]view.Match) error {
+	var ids []int
+
+	for _, match := range *matches {
+		ids = append(ids, *match.Id)
+	}
+
+	response, err := us.apiClient.GetFixturesById(ids)
+
+	if err != nil {
+		log.Printf("Error [ImportMatches]: %v - [%v]", err, ids)
+	}
+
+	competitions, err := us.getCompetitionAndMatches(response)
+
+	if err != nil {
+		log.Printf("Error [ImportMatches]: %v - [%v]", err, ids)
+		return err
+	}
+
+	return us.insertCompetitionAndMatches(competitions)
+}
+
 func (us *UpdateService) ImportHeadToHead(homeId int, awayId int) error {
 	response, err := us.apiClient.GetHeadToHead(homeId, awayId)
 
@@ -328,6 +351,8 @@ func (us *UpdateService) getCompetitionAndMatches(fixtures *client.GetFixturesRe
 			continue
 		}
 
+		matchEnded := result.Fixture.Status.Code == "FT" || result.Fixture.Status.Code == "AET"
+
 		match := domain.Match{
 			Id: result.Fixture.Id,
 			Home: &domain.Team{
@@ -347,9 +372,12 @@ func (us *UpdateService) getCompetitionAndMatches(fixtures *client.GetFixturesRe
 				Name: result.Fixture.Venue.Name,
 				City: result.Fixture.Venue.City,
 			},
-			StartAt:   startAt,
-			HomeScore: result.Score.FullTime.Home,
-			AwayScore: result.Score.FullTime.Away,
+			StartAt:     startAt,
+			HomeScore:   result.Score.FullTime.Home,
+			AwayScore:   result.Score.FullTime.Away,
+			Ended:       matchEnded,
+			Status:      result.Fixture.Status.Code,
+			ElapsedTime: result.Fixture.Status.ElapsedMinutes,
 		}
 
 		competition := domain.Competition{

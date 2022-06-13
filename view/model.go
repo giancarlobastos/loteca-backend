@@ -45,6 +45,9 @@ type Match struct {
 	Order            *int       `json:"order,omitempty"`
 	Raffle           bool       `json:"raffle"`
 	RaffleResult     *string    `json:"raffle_result,omitempty"`
+	Ended            bool       `json:"ended"`
+	Status           *string    `json:"status,omitempty"`
+	ElapsedTime      *int       `json:"elapsed_time,omitempty"`
 }
 
 type MatchDetails struct {
@@ -99,12 +102,13 @@ type Odd struct {
 }
 
 type LiveScore struct {
-	Id        *int    `json:"id,omitempty"`
-	Order     *int    `json:"order,omitempty"`
-	HomeScore *int    `json:"home_score,omitempty"`
-	AwayScore *int    `json:"away_score,omitempty"`
-	Live      bool    `json:"live,omitempty"`
-	HalfTime  bool    `json:"half_time,omitempty"`
-	Status    *string `json:"status,omitempty"`
-	Elapsed   *int    `json:"elapsed,omitempty"`
+	Id        *int       `json:"id,omitempty"`
+	Order     *int       `json:"order,omitempty"`
+	StartAt   *time.Time `json:"start_at,omitempty"`
+	HomeScore *int       `json:"home_score,omitempty"`
+	AwayScore *int       `json:"away_score,omitempty"`
+	Live      bool       `json:"live,omitempty"`
+	HalfTime  bool       `json:"half_time,omitempty"`
+	Status    *string    `json:"status,omitempty"`
+	Elapsed   *int       `json:"elapsed,omitempty"`
 }

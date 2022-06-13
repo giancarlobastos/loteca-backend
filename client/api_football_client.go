@@ -40,6 +40,23 @@ func (c *ApiFootballClient) GetFixtures(leagueId int, year int) (fixturesRespons
 	return fixturesResponse, nil
 }
 
+func (c *ApiFootballClient) GetFixturesById(matchIds []int) (fixturesResponse *GetFixturesResponse, err error) {
+	ids := ""
+
+	for i, matchId := range matchIds {
+		ids += strconv.Itoa(matchId)
+
+		if i < len(matchIds) - 1 {
+			ids += "-"
+		}
+	}
+
+	params := map[string]string{"ids": ids, "timezone": "America/Sao_Paulo"}
+	body, _ := c.callApi("https://api-football-v1.p.rapidapi.com/v3/fixtures", &params)
+	json.Unmarshal(body, &fixturesResponse)
+	return fixturesResponse, nil
+}
+
 func (c *ApiFootballClient) GetLastFixtures(teamId int, limit int) (fixturesResponse *GetFixturesResponse, err error) {
 	params := map[string]string{"team": strconv.Itoa(teamId), "last": strconv.Itoa(limit), "timezone": "America/Sao_Paulo"}
 	body, _ := c.callApi("https://api-football-v1.p.rapidapi.com/v3/fixtures", &params)
@@ -90,7 +107,7 @@ func (c *ApiFootballClient) GetOdds(matchId int) (oddsResponse *GetOddsResponse,
 
 func (c *ApiFootballClient) callApi(url string, params *map[string]string) ([]byte, error) {
 	log.Printf("[%s]: %v", url, params)
-	
+
 	if c.remainingRequestCount <= 0 {
 		log.Printf("no remaining calls to ApiFootball [%v]", c.remainingRequestCount)
 		// return make([]byte, 0), errors.New("no remaining calls to ApiFootball")
