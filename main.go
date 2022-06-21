@@ -63,9 +63,11 @@ func init() {
 
 	liveScoreDaemon := daemon.NewLiveScoreDaemon(apiClient, updateService, cacheService, lotteryRepository, notificationService)
 	lottteryDaemon := daemon.NewLotteryDaemon(cacheService, lotteryRepository, notificationService)
+	bookmakerDaemon := daemon.NewBookmakerDaemon(updateService, lotteryRepository)
 	
 	go liveScoreDaemon.CheckLiveScores()
 	go lottteryDaemon.CheckUpdates()
+	go bookmakerDaemon.UpdateOdds()
 
 	router = api.NewRouter(apiService, updateService, notificationService)
 }
