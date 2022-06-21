@@ -135,7 +135,7 @@ func (lr *PollRepository) Vote(poll domain.Poll, user domain.User) error {
 
 	defer stmt.Close()
 
-	votedAt := time.Now()
+	votedAt := time.Now().UTC()
 
 	for _, vote := range poll.Votes {
 		_, err = stmt.Exec(poll.LotteryId, vote.MatchId, *user.Id, vote.Result, votedAt)

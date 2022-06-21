@@ -23,6 +23,7 @@ type ApiService struct {
 	updateService         *UpdateService
 	facebookClient        *client.FacebookClient
 	cacheService          *CacheService
+	notificationService   *NotificationService
 }
 
 func NewApiService(
@@ -34,7 +35,8 @@ func NewApiService(
 	competitionRepository *repository.CompetitionRepository,
 	updateService *UpdateService,
 	facebookClient *client.FacebookClient,
-	cacheService *CacheService) *ApiService {
+	cacheService *CacheService,
+	notificationService *NotificationService) *ApiService {
 	return &ApiService{
 		userRepository:        userRepository,
 		lotteryRepository:     lotteryRepository,
@@ -45,6 +47,7 @@ func NewApiService(
 		updateService:         updateService,
 		facebookClient:        facebookClient,
 		cacheService:          cacheService,
+		notificationService:   notificationService,
 	}
 }
 
@@ -99,17 +102,23 @@ func (as *ApiService) GetLiveScores(lotteryId int) (*[]view.LiveScore, error) {
 }
 
 func (as *ApiService) GetPollResults(lotteryId int) (*view.PollResults, error) {
-	pollResults, err := as.pollRepository.GetPollResults(lotteryId)
+	key := fmt.Sprint("poll_", lotteryId)
+	pollResults, err := as.cacheService.Get(key)
 
 	if err != nil {
-		return nil, err
+		pollResults, err = as.pollRepository.GetPollResults(lotteryId)
+
+		if err != nil || reflect.ValueOf(pollResults).IsNil() {
+			return nil, err
+		}
+		as.cacheService.Put(key, pollResults)
 	}
 
-	return pollResults, nil
+	return pollResults.(*view.PollResults), nil
 }
 
 func (as *ApiService) Vote(poll domain.Poll, user domain.User) error {
-	lottery, err := as.GetCurrentLottery()
+	lottery, err := as.GetLottery(poll.LotteryId)
 
 	if err == nil && lottery.Id != nil {
 
@@ -118,6 +127,25 @@ func (as *ApiService) Vote(poll domain.Poll, user domain.User) error {
 		}
 
 		err = as.pollRepository.Vote(poll, user)
+
+		if err == nil {
+			as.cacheService.Delete(fmt.Sprint("poll_", *lottery.Id))
+			pollResults, err := as.GetPollResults(*lottery.Id)
+
+			if err != nil {
+				return err
+			}
+
+			for _, vote := range pollResults.Votes {
+				matchDetails, cacheErr := as.cacheService.Get(fmt.Sprint("details_", vote.MatchId))
+
+				if cacheErr == nil {
+					matchDetails.(*view.MatchDetails).Votes = &vote
+					matchDetails.(*view.MatchDetails).TotalVotes = pollResults.TotalVotes
+				}
+			}
+			as.notificationService.NotifyPollEvent(*lottery.Id)
+		}
 	}
 
 	return err
