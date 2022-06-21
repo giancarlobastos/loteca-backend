@@ -81,7 +81,9 @@ CREATE TABLE `lottery` (
   `accumulated` boolean,
   `end_at` timestamp,
   `result_at` timestamp,
-  `enabled` boolean NOT NULL DEFAULT FALSE
+  `enabled` boolean NOT NULL DEFAULT FALSE,
+  `current` boolean NOT NULL DEFAULT FALSE,
+  `updated_at` timestamp NULL DEFAULT NOW()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `lottery_match` (

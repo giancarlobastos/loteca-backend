@@ -113,7 +113,7 @@ func (as *ApiService) Vote(poll domain.Poll, user domain.User) error {
 
 	if err == nil && lottery.Id != nil {
 
-		if time.Now().After(*lottery.EndAt) {
+		if time.Now().UTC().After(*lottery.EndAt) {
 			return errors.New("voting period is over")
 		}
 

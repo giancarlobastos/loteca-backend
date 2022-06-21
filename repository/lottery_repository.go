@@ -26,19 +26,62 @@ func NewLotteryRepository(
 
 func (lr *LotteryRepository) GetCurrentLottery() (*view.Lottery, error) {
 	query :=
-		`SELECT id, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
+		`SELECT id, name, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
 			side_prize_winners, special_prize, accumulated, end_at, result_at
 	     FROM lottery 
-		 WHERE enabled
+		 WHERE enabled AND current 
 		 ORDER BY number DESC
 		 LIMIT 1`
 
 	return lr.getLottery(query)
 }
 
+func (lr *LotteryRepository) GetLotteryUpdates() (*[]view.Lottery, error) {
+	query :=
+		`SELECT id, name, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
+			side_prize_winners, special_prize, accumulated, end_at, result_at, updated_at, enabled
+	     FROM lottery 
+		 WHERE updated_at BETWEEN DATE_SUB(NOW(), INTERVAL 1 DAY) AND NOW()`
+
+	stmt, err := lr.db.Prepare(query)
+
+	if err != nil {
+		log.Printf("Error [GetLotteryUpdates]: %v", err)
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+
+	if err != nil {
+		log.Printf("Error [GetLotteryUpdates]: %v - Could not get lottery updates", err)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	lotteries := make([]view.Lottery, 0)
+
+	if rows.Next() {
+		lottery := view.Lottery{}
+		err = rows.Scan(&lottery.Id, &lottery.Name, &lottery.Number, &lottery.EstimatedPrize, &lottery.MainPrize, &lottery.MainPrizeWinners,
+			&lottery.SidePrize, &lottery.SidePrizeWinners, &lottery.SpecialPrize, &lottery.Accumulated, &lottery.EndAt, &lottery.ResultAt, &lottery.UpdatedAt, &lottery.Enabled)
+
+		if err != nil {
+			log.Printf("Error [GetLotteryUpdates]: %v", err)
+			return nil, err
+		}
+
+		lotteries = append(lotteries, lottery)
+	}
+
+	return &lotteries, err
+}
+
 func (lr *LotteryRepository) GetLottery(number int) (*view.Lottery, error) {
 	query :=
-		`SELECT id, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
+		`SELECT id, name, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
 			side_prize_winners, special_prize, accumulated, end_at, result_at
 	     FROM lottery 
 		 WHERE number = ?`
@@ -125,11 +168,11 @@ func (lr *LotteryRepository) getLottery(query string, args ...interface{}) (*vie
 	lottery := view.Lottery{}
 
 	if rows.Next() {
-		err = rows.Scan(&lottery.Id, &lottery.Number, &lottery.EstimatedPrize, &lottery.MainPrize, &lottery.MainPrizeWinners,
+		err = rows.Scan(&lottery.Id, &lottery.Name, &lottery.Number, &lottery.EstimatedPrize, &lottery.MainPrize, &lottery.MainPrizeWinners,
 			&lottery.SidePrize, &lottery.SidePrizeWinners, &lottery.SpecialPrize, &lottery.Accumulated, &lottery.EndAt, &lottery.ResultAt)
 
 		if err != nil {
-			log.Printf("Error [GetCompetition]: %v", err)
+			log.Printf("Error [getLottery]: %v", err)
 			return nil, err
 		}
 

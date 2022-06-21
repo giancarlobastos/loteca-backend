@@ -51,12 +51,19 @@ func (lsd *LiveScoreDaemon) checkLiveScores() time.Duration {
 		return 5 * time.Minute
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	update := false
 	earliestMatchAt := time.Unix(99999999999999, 0)
 
 	for _, match := range *lottery.Matches {
-		if match.Ended {
+		if match.Ended || match.Raffle || 
+			*match.Status == "CANC" ||
+			*match.Status == "SUSP" || 
+			*match.Status == "INT" || 
+			*match.Status == "PST" || 
+			*match.Status == "ABD" || 
+			*match.Status == "AWD" || 
+			*match.Status == "WO" {
 			continue
 		}
 
@@ -86,27 +93,29 @@ func (lsd *LiveScoreDaemon) checkLiveScores() time.Duration {
 	}
 
 	for i := range *lottery.Matches {
-		lsd.notifyUpdates(&(*lottery.Matches)[i], &(*updatedLottery.Matches)[i])
+		lsd.notifyUpdates(*lottery.Id, &(*lottery.Matches)[i], &(*updatedLottery.Matches)[i], now.Unix())
 	}
 
 	return 5 * time.Minute
 }
 
-func (lsd *LiveScoreDaemon) notifyUpdates(oldMatch *view.Match, newMatch *view.Match) {
+func (lsd *LiveScoreDaemon) notifyUpdates(lotteryId int, oldMatch *view.Match, newMatch *view.Match, timestamp int64) error {
 	if *oldMatch.HomeScore != *newMatch.HomeScore || *oldMatch.AwayScore != *newMatch.AwayScore {
-		log.Printf("Goal: %v", newMatch)
-		return
+		log.Printf("Goal: %v", *newMatch)
+		return lsd.notificationService.NotifyMatchScore(lotteryId, newMatch, timestamp)
 	}
 
 	if oldMatch.Ended != newMatch.Ended {
-		log.Printf("Finished: %v", newMatch)
-		return
+		log.Printf("Finished: %v", *newMatch)
+		return lsd.notificationService.NotifyMatchFinished(lotteryId, newMatch, timestamp)
 	}
 
 	if *oldMatch.Status != *newMatch.Status && *newMatch.Status == "HT" {
-		log.Printf("Interval: %v", newMatch)
-		return
+		log.Printf("Interval: %v", *newMatch)
+		return lsd.notificationService.NotifyMatchInterval(lotteryId, newMatch, timestamp)
 	}
+
+	return nil
 }
 
 func catchErrors() {

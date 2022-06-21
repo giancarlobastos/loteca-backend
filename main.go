@@ -62,7 +62,10 @@ func init() {
 	notificationService := service.NewNotificationService(firebaseClient)
 
 	liveScoreDaemon := daemon.NewLiveScoreDaemon(apiClient, updateService, cacheService, lotteryRepository, notificationService)
+	lottteryDaemon := daemon.NewLotteryDaemon(cacheService, lotteryRepository, notificationService)
+	
 	go liveScoreDaemon.CheckLiveScores()
+	go lottteryDaemon.CheckUpdates()
 
 	router = api.NewRouter(apiService, updateService, notificationService)
 }

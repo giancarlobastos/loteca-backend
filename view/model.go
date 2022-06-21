@@ -21,6 +21,8 @@ type Lottery struct {
 	LatestMatchAt    *time.Time `json:"latest_at,omitempty"`
 	Matches          *[]Match   `json:"matches,omitempty"`
 	LotteryIds       *[]int     `json:"lottery_ids,omitempty"`
+	UpdatedAt        *time.Time `json:"-"`
+	Enabled        bool `json:"-"`
 }
 
 type Match struct {
@@ -107,8 +109,8 @@ type LiveScore struct {
 	StartAt   *time.Time `json:"start_at,omitempty"`
 	HomeScore *int       `json:"home_score,omitempty"`
 	AwayScore *int       `json:"away_score,omitempty"`
-	Live      bool       `json:"live,omitempty"`
-	HalfTime  bool       `json:"half_time,omitempty"`
+	Live      *bool      `json:"live,omitempty"`
+	HalfTime  *bool      `json:"half_time,omitempty"`
 	Status    *string    `json:"status,omitempty"`
 	Elapsed   *int       `json:"elapsed,omitempty"`
 }

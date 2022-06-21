@@ -49,3 +49,8 @@ func (fc *FirebaseClient) SendTopic(message string) error {
 
 	return err
 }
+
+func (fc *FirebaseClient) SendMessage(message *messaging.Message) error {
+	_, err := fc.client.Send(context.Background(), message)
+	return err
+}

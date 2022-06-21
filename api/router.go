@@ -49,7 +49,6 @@ func (router *Router) Start(addr string) {
 	r.HandleFunc("/manager/lotteries", router.createLottery).Methods("POST")
 	r.HandleFunc("/manager/odds/{matchId}", router.importOdds).Methods("POST")
 	r.HandleFunc("/manager/h2h/{homeId}/{awayId}", router.h2h).Methods("POST")
-	r.HandleFunc("/manager/notification", router.notify).Methods("POST")
 	r.Use(router.authenticationMiddleware.Middleware)
 	log.Fatal(http.ListenAndServe(addr, r))
 }
@@ -306,18 +305,6 @@ func (router *Router) h2h(w http.ResponseWriter, r *http.Request) {
 	homeId, _ := strconv.Atoi(vars["homeId"])
 	awayId, _ := strconv.Atoi(vars["awayId"])
 	err := router.updateService.ImportHeadToHead(homeId, awayId)
-
-	if err != nil {
-		respondWithError(w, http.StatusNotFound, err.Error())
-		return
-	}
-
-	respondWithJSON(w, http.StatusOK, nil)
-}
-
-func (router *Router) notify(w http.ResponseWriter, r *http.Request) {
-	defer handleErrors(w, r)
-	err := router.notificationService.SendNotification("Hello FE")
 
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, err.Error())
