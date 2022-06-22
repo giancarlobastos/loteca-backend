@@ -55,11 +55,11 @@ func init() {
 	apiClient := client.NewApiFootballClient()
 	facebookClient := client.NewFacebookClient()
 	firebaseClient := client.NewFirebaseClient()
+	notificationService := service.NewNotificationService(firebaseClient)
 
 	cacheService := service.NewCacheService()
 	updateService := service.NewUpdateService(teamRepository, competitionRepository, matchRepository, bookmakerRepository, apiClient)
-	apiService := service.NewApiService(userRepository, lotteryRepository, pollRepository, matchRepository, bookmakerRepository, competitionRepository, updateService, facebookClient, cacheService)
-	notificationService := service.NewNotificationService(firebaseClient)
+	apiService := service.NewApiService(userRepository, lotteryRepository, pollRepository, matchRepository, bookmakerRepository, competitionRepository, updateService, facebookClient, cacheService, notificationService)
 
 	liveScoreDaemon := daemon.NewLiveScoreDaemon(apiClient, updateService, cacheService, lotteryRepository, notificationService)
 	lottteryDaemon := daemon.NewLotteryDaemon(cacheService, lotteryRepository, notificationService)
