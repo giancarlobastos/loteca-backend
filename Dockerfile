@@ -11,5 +11,7 @@ RUN rm google-chrome-stable_current_amd64.deb
 VOLUME /assets
 
 ADD loteca-backend_unix .
+ADD firebase.json .
+
 CMD ["./loteca-backend_unix"]
 EXPOSE 8080
