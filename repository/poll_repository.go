@@ -116,6 +116,50 @@ func (pr *PollRepository) GetVotes(matchId int) (*view.Vote, int, error) {
 	return nil, 0, err
 }
 
+func (pr *PollRepository) GetUserVotes(lotteryId int, userId int) (*domain.Poll, error) {
+	stmt, err := pr.db.Prepare(
+		`SELECT lp.match_id, lp.result
+		 FROM lottery_poll lp
+		 JOIN lottery_match lm ON lp.match_id = lm.match_id
+		 WHERE lp.lottery_id = ? AND lp.user_id = ?
+		 ORDER BY lm.order`)
+
+	if err != nil {
+		log.Printf("Error [GetUserVotes]: %v - [%v, %v]", err, lotteryId, userId)
+		return nil, err
+	}
+
+	defer stmt.Close()
+
+	rows, err := stmt.Query(lotteryId, userId)
+
+	if err != nil {
+		log.Printf("Error [GetUserVotes]: %v - [%v, %v]", err, lotteryId, userId)
+		return nil, err
+	}
+
+	defer rows.Close()
+	votes := make([]domain.Vote, 0)
+
+	for rows.Next() {
+		vote := domain.Vote{}
+
+		err = rows.Scan(&vote.MatchId, &vote.Result)
+
+		if err != nil {
+			log.Printf("Error [GetUserVotes]: %v - [%v, %v]", err, lotteryId, userId)
+			return nil, err
+		}
+
+		votes = append(votes, vote)
+	}
+
+	return &domain.Poll{
+		LotteryId: lotteryId,
+		Votes:     votes,
+	}, nil
+}
+
 func (lr *PollRepository) Vote(poll domain.Poll, user domain.User) error {
 	tx, err := lr.db.BeginTx(context.Background(), nil)
 

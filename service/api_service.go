@@ -117,6 +117,16 @@ func (as *ApiService) GetPollResults(lotteryId int) (*view.PollResults, error) {
 	return pollResults.(*view.PollResults), nil
 }
 
+func (as *ApiService) GetUserVotes(lotteryId int, user domain.User) (*[]domain.Vote, error) {
+	poll, err := as.pollRepository.GetUserVotes(lotteryId, *user.Id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &poll.Votes, nil
+}
+
 func (as *ApiService) Vote(poll domain.Poll, user domain.User) error {
 	lottery, err := as.GetLottery(poll.LotteryId)
 

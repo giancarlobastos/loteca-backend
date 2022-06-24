@@ -38,6 +38,7 @@ func (router *Router) Start(addr string) {
 	r.HandleFunc("/live/{lotteryId}", router.getLiveScores).Methods("GET")
 	r.HandleFunc("/matches/{matchId}", router.getMatchDetails).Methods("GET")
 	r.HandleFunc("/poll/{lotteryId}", router.getPollResults).Methods("GET")
+	r.HandleFunc("/poll/{lotteryId}/votes", router.getUserVotes).Methods("GET")
 	r.HandleFunc("/poll/{lotteryId}", router.vote).Methods("POST")
 	r.HandleFunc("/login", router.login).Methods("POST")
 	r.HandleFunc("/manager/{country}/teams", router.getTeams).Methods("GET")
@@ -175,6 +176,23 @@ func (router *Router) getPollResults(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, results)
+}
+
+func (router *Router) getUserVotes(w http.ResponseWriter, r *http.Request) {
+	defer handleErrors(w, r)
+
+	vars := mux.Vars(r)
+	lotteryId, _ := strconv.Atoi(vars["lotteryId"])
+	user := r.Context().Value("user").(domain.User)
+
+	votes, err := router.apiService.GetUserVotes(lotteryId, user)
+
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	respondWithJSON(w, http.StatusOK, votes)
 }
 
 func (router *Router) getCurrentLottery(w http.ResponseWriter, r *http.Request) {

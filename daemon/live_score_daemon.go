@@ -56,14 +56,15 @@ func (lsd *LiveScoreDaemon) checkLiveScores() time.Duration {
 	earliestMatchAt := time.Unix(99999999999999, 0)
 
 	for _, match := range *lottery.Matches {
-		if match.Ended || match.Raffle || 
-			*match.Status == "CANC" ||
-			*match.Status == "SUSP" || 
-			*match.Status == "INT" || 
-			*match.Status == "PST" || 
-			*match.Status == "ABD" || 
-			*match.Status == "AWD" || 
-			*match.Status == "WO" {
+		if match.Ended || match.Raffle ||
+			(match.Status != nil &&
+				(*match.Status == "CANC" ||
+					*match.Status == "SUSP" ||
+					*match.Status == "INT" ||
+					*match.Status == "PST" ||
+					*match.Status == "ABD" ||
+					*match.Status == "AWD" ||
+					*match.Status == "WO")) {
 			continue
 		}
 
