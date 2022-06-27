@@ -37,12 +37,7 @@ func main() {
 }
 
 func init() {
-	var err error
-	database, err = sql.Open("mysql", "root:secret@tcp(mysql:3306)/loteca?parseTime=true")
-
-	if err != nil {
-		log.Fatalf("Error [init]: %v", err)
-	}
+	database = getDatabaseConnection()
 
 	teamRepository := repository.NewTeamRepository(database)
 	competitionRepository := repository.NewCompetitionRepository(database)
@@ -64,12 +59,26 @@ func init() {
 	liveScoreDaemon := daemon.NewLiveScoreDaemon(apiClient, updateService, cacheService, lotteryRepository, notificationService)
 	lottteryDaemon := daemon.NewLotteryDaemon(cacheService, lotteryRepository, notificationService)
 	bookmakerDaemon := daemon.NewBookmakerDaemon(updateService, lotteryRepository)
-	
+
 	go liveScoreDaemon.CheckLiveScores()
 	go lottteryDaemon.CheckUpdates()
 	go bookmakerDaemon.UpdateOdds()
 
 	router = api.NewRouter(apiService, updateService, notificationService)
+}
+
+func getDatabaseConnection() *sql.DB {
+	db, err := sql.Open("mysql", "root:secret@tcp(mysql:3306)/loteca?parseTime=true")
+
+	if err != nil {
+		log.Fatalf("Error [getDatabaseConnection]: %v", err)
+	}
+
+	if err = db.Ping(); err != nil {
+		log.Fatalf("Error [getDatabaseConnection]: %v", err)
+	}
+
+	return db
 }
 
 func destroy() {
