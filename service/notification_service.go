@@ -16,6 +16,7 @@ import (
 
 type NotificationService struct {
 	firebaseClient *client.FirebaseClient
+	topic          string
 }
 
 type NotificationType string
@@ -27,9 +28,11 @@ const (
 )
 
 func NewNotificationService(
-	firebaseClient *client.FirebaseClient) *NotificationService {
+	firebaseClient *client.FirebaseClient,
+	topic string) *NotificationService {
 	return &NotificationService{
 		firebaseClient: firebaseClient,
+		topic:          topic,
 	}
 }
 
@@ -47,8 +50,8 @@ func (ns *NotificationService) NotifyMatchFinished(lotteryId int, match *view.Ma
 
 func (ns *NotificationService) NotifyPollEvent(lotteryId int) error {
 	message := &messaging.Message{
-		Data: data(lotteryId, POLL_EVENT),
-		Topic: "loteca",
+		Data:  data(lotteryId, POLL_EVENT),
+		Topic: ns.topic,
 	}
 	return ns.firebaseClient.SendMessage(message)
 }
@@ -57,11 +60,11 @@ func (ns *NotificationService) NotifyNewLotteryEvent(lottery *view.Lottery) erro
 	title := fmt.Sprintf("%s Disponível", *lottery.Name)
 
 	if lottery.EstimatedPrize == nil {
-		return ns.notifyLotteryEvent(*lottery.Id, title, "");
+		return ns.notifyLotteryEvent(*lottery.Id, title, "")
 	}
 
 	body := fmt.Sprintf("Prêmio Estimado em %s", toBRL(*lottery.EstimatedPrize))
-	return ns.notifyLotteryEvent(*lottery.Id, title, body);
+	return ns.notifyLotteryEvent(*lottery.Id, title, body)
 }
 
 func (ns *NotificationService) NotifyLotteryResultEvent(lottery *view.Lottery) error {
@@ -71,7 +74,7 @@ func (ns *NotificationService) NotifyLotteryResultEvent(lottery *view.Lottery) e
 		title = "ACUMULOU!! - " + title
 	}
 
-	mainPrizeResult := fmt.Sprintf("%d ganhadores com 14 acertos - Prêmio de %s", 
+	mainPrizeResult := fmt.Sprintf("%d ganhadores com 14 acertos - Prêmio de %s",
 		*lottery.MainPrizeWinners, toBRL(*lottery.MainPrize))
 
 	switch *lottery.MainPrizeWinners {
@@ -81,7 +84,7 @@ func (ns *NotificationService) NotifyLotteryResultEvent(lottery *view.Lottery) e
 		mainPrizeResult = fmt.Sprintf("1 ganhador com 14 acertos - Prêmio de %s", toBRL(*lottery.MainPrize))
 	}
 
-	sidePrizeResult := fmt.Sprintf("%d ganhadores com 13 acertos - Prêmio de %s", 
+	sidePrizeResult := fmt.Sprintf("%d ganhadores com 13 acertos - Prêmio de %s",
 		*lottery.SidePrizeWinners, toBRL(*lottery.SidePrize))
 
 	switch *lottery.SidePrizeWinners {
@@ -92,13 +95,13 @@ func (ns *NotificationService) NotifyLotteryResultEvent(lottery *view.Lottery) e
 	}
 
 	body := fmt.Sprintf("%s\n%s", mainPrizeResult, sidePrizeResult)
-	return ns.notifyLotteryEvent(*lottery.Id, title, body);
+	return ns.notifyLotteryEvent(*lottery.Id, title, body)
 }
 
 func (ns *NotificationService) NotifyLotteryUpdateEvent(lotteryId int) error {
 	message := &messaging.Message{
-		Data: data(lotteryId, LOTTERY_EVENT),
-		Topic: "loteca",
+		Data:  data(lotteryId, LOTTERY_EVENT),
+		Topic: ns.topic,
 	}
 	return ns.firebaseClient.SendMessage(message)
 }
@@ -111,7 +114,7 @@ func (ns *NotificationService) notifyMatchEvent(lotteryId int, title string, mat
 			Title: title,
 			Body:  body,
 		},
-		Topic: "loteca",
+		Topic: ns.topic,
 	}
 	return ns.firebaseClient.SendMessage(message)
 }
@@ -123,23 +126,23 @@ func (ns *NotificationService) notifyLotteryEvent(lotteryId int, title string, b
 			Title: title,
 			Body:  body,
 		},
-		Topic: "loteca",
+		Topic: ns.topic,
 	}
 	return ns.firebaseClient.SendMessage(message)
 }
 
 func notification(lotteryId int, notificationType NotificationType, timestamp int64) map[string]string {
 	return map[string]string{
-		"type":      string(notificationType),
-		"timestamp": strconv.Itoa(int(timestamp)),
-		"lottery_id":  strconv.Itoa(lotteryId),
+		"type":       string(notificationType),
+		"timestamp":  strconv.Itoa(int(timestamp)),
+		"lottery_id": strconv.Itoa(lotteryId),
 	}
 }
 
 func data(lotteryId int, notificationType NotificationType) map[string]string {
 	return map[string]string{
-		"type":      string(notificationType),
-		"lottery_id":  strconv.Itoa(lotteryId),
+		"type":       string(notificationType),
+		"lottery_id": strconv.Itoa(lotteryId),
 	}
 }
 

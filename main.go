@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"os"
 	"sync"
 
 	"github.com/giancarlobastos/loteca-backend/api"
@@ -37,6 +38,7 @@ func main() {
 }
 
 func init() {
+	topic := os.Getenv("TOPIC")
 	database = getDatabaseConnection()
 
 	teamRepository := repository.NewTeamRepository(database)
@@ -50,11 +52,13 @@ func init() {
 	apiClient := client.NewApiFootballClient()
 	facebookClient := client.NewFacebookClient()
 	firebaseClient := client.NewFirebaseClient()
-	notificationService := service.NewNotificationService(firebaseClient)
+	notificationService := service.NewNotificationService(firebaseClient, topic)
 
 	cacheService := service.NewCacheService()
 	updateService := service.NewUpdateService(teamRepository, competitionRepository, matchRepository, bookmakerRepository, apiClient)
 	apiService := service.NewApiService(userRepository, lotteryRepository, pollRepository, matchRepository, bookmakerRepository, competitionRepository, updateService, facebookClient, cacheService, notificationService)
+
+	log.Printf("topic: %s", topic)
 
 	liveScoreDaemon := daemon.NewLiveScoreDaemon(apiClient, updateService, cacheService, lotteryRepository, notificationService)
 	lottteryDaemon := daemon.NewLotteryDaemon(cacheService, lotteryRepository, notificationService)

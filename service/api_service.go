@@ -102,19 +102,13 @@ func (as *ApiService) GetLiveScores(lotteryId int) (*[]view.LiveScore, error) {
 }
 
 func (as *ApiService) GetPollResults(lotteryId int) (*view.PollResults, error) {
-	key := fmt.Sprint("poll_", lotteryId)
-	pollResults, err := as.cacheService.Get(key)
+	pollResults, err := as.pollRepository.GetPollResults(lotteryId)
 
-	if err != nil {
-		pollResults, err = as.pollRepository.GetPollResults(lotteryId)
-
-		if err != nil || reflect.ValueOf(pollResults).IsNil() {
-			return nil, err
-		}
-		as.cacheService.Put(key, pollResults)
+	if err != nil || reflect.ValueOf(pollResults).IsNil() {
+		return nil, err
 	}
 
-	return pollResults.(*view.PollResults), nil
+	return pollResults, nil
 }
 
 func (as *ApiService) GetUserVotes(lotteryId int, user domain.User) (*[]domain.Vote, error) {
@@ -139,7 +133,6 @@ func (as *ApiService) Vote(poll domain.Poll, user domain.User) error {
 		err = as.pollRepository.Vote(poll, user)
 
 		if err == nil {
-			as.cacheService.Delete(fmt.Sprint("poll_", *lottery.Id))
 			pollResults, err := as.GetPollResults(*lottery.Id)
 
 			if err != nil {

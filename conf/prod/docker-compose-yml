@@ -23,6 +23,8 @@ services:
   backend:
     image: giancarlobastos/loteca:1.0.16
     restart: 'always'
+    environment:
+      - TOPIC=loteca
     ports:
       - '9000:9000'
       - '9001:9001'
