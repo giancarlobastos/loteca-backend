@@ -29,17 +29,17 @@ services:
       - mysql
     networks:
       - loteca-network
-  route53:
-    image: giancarlobastos/route53-dyndns:1.2.1
-    container_name: route53
-    restart: always
-    environment:
-      - AWS_ACCESS_KEY_ID=AKIA5QBALE2U4EWT4KBW
-      - AWS_SECRET_ACCESS_KEY=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
-      - AWS_CONNECTION_REGION=sa-east-1
-      - ROUTE53_DOMAIN_A_RECORD=loteca.click
-      - ROUTE53_UPDATE_FREQUENCY=10800
-      - ROUTE53_RECORD_TTL=300
+  # route53:
+  #   image: giancarlobastos/route53-dyndns:1.2.1
+  #   container_name: route53
+  #   restart: always
+  #   environment:
+  #     - AWS_ACCESS_KEY_ID=AKIA5QBALE2U4EWT4KBW
+  #     - AWS_SECRET_ACCESS_KEY=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
+  #     - AWS_CONNECTION_REGION=sa-east-1
+  #     - ROUTE53_DOMAIN_A_RECORD=loteca.click
+  #     - ROUTE53_UPDATE_FREQUENCY=10800
+  #     - ROUTE53_RECORD_TTL=300
   nginx-server:
     image: nginx:1.15-alpine
     container_name: nginx-server
