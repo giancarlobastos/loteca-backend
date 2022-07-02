@@ -112,7 +112,7 @@ func (lsd *LiveScoreDaemon) notifyUpdates(lotteryId int, oldMatch *view.Match, n
 			(oldMatch.HomeScore != nil && *oldMatch.HomeScore != *newMatch.HomeScore) ||
 			(oldMatch.AwayScore != nil && *oldMatch.AwayScore != *newMatch.AwayScore)) {
 		log.Printf("Goal: %v", *newMatch)
-		return lsd.notificationService.NotifyMatchScore(lotteryId, newMatch, timestamp)
+		lsd.notificationService.NotifyMatchScore(lotteryId, newMatch, timestamp)
 	}
 
 	if oldMatch.Ended != newMatch.Ended {
