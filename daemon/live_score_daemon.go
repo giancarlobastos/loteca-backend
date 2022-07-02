@@ -36,7 +36,12 @@ func NewLiveScoreDaemon(apiClient *client.ApiFootballClient,
 func (lsd *LiveScoreDaemon) CheckLiveScores() {
 	for {
 		nextCheck := lsd.checkLiveScores()
-		time.Sleep(nextCheck)
+
+		if nextCheck == 0 {
+			time.Sleep(5 * time.Minute)
+		} else {
+			time.Sleep(nextCheck)
+		}
 	}
 }
 
@@ -101,7 +106,11 @@ func (lsd *LiveScoreDaemon) checkLiveScores() time.Duration {
 }
 
 func (lsd *LiveScoreDaemon) notifyUpdates(lotteryId int, oldMatch *view.Match, newMatch *view.Match, timestamp int64) error {
-	if *oldMatch.HomeScore != *newMatch.HomeScore || *oldMatch.AwayScore != *newMatch.AwayScore {
+	if (newMatch.HomeScore != nil && newMatch.AwayScore != nil) &&
+		((oldMatch.HomeScore == nil && *newMatch.HomeScore > 0) ||
+			(oldMatch.AwayScore == nil && *newMatch.AwayScore > 0) ||
+			(oldMatch.HomeScore != nil && *oldMatch.HomeScore != *newMatch.HomeScore) ||
+			(oldMatch.AwayScore != nil && *oldMatch.AwayScore != *newMatch.AwayScore)) {
 		log.Printf("Goal: %v", *newMatch)
 		return lsd.notificationService.NotifyMatchScore(lotteryId, newMatch, timestamp)
 	}

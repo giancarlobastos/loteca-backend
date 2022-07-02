@@ -351,7 +351,22 @@ func (us *UpdateService) getCompetitionAndMatches(fixtures *client.GetFixturesRe
 			continue
 		}
 
-		matchEnded := result.Fixture.Status.Code == "FT" || result.Fixture.Status.Code == "AET"
+		matchEnded := result.Fixture.Status.Code == "FT" ||
+			result.Fixture.Status.Code == "AET" ||
+			result.Fixture.Status.Code == "PEN" ||
+			result.Fixture.Status.Code == "P" ||
+			result.Fixture.Status.Code == "ET"
+
+		homeScore := result.Goals.Home
+		awayScore := result.Goals.Away
+
+		if result.Score.FullTime.Home != nil {
+			homeScore = result.Score.FullTime.Home
+		}
+
+		if result.Score.FullTime.Away != nil {
+			awayScore = result.Score.FullTime.Away
+		}
 
 		match := domain.Match{
 			Id: result.Fixture.Id,
@@ -373,8 +388,8 @@ func (us *UpdateService) getCompetitionAndMatches(fixtures *client.GetFixturesRe
 				City: result.Fixture.Venue.City,
 			},
 			StartAt:     startAt,
-			HomeScore:   result.Score.FullTime.Home,
-			AwayScore:   result.Score.FullTime.Away,
+			HomeScore:   homeScore,
+			AwayScore:   awayScore,
 			Ended:       matchEnded,
 			Status:      result.Fixture.Status.Code,
 			ElapsedTime: result.Fixture.Status.ElapsedMinutes,
