@@ -11,17 +11,12 @@ services:
     expose:
       - '3306'
     volumes:
-      - loteca-mysql:/var/lib/mysql
+      - mysql-volume:/var/lib/mysql
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/1.sql
-      - ./scripts/data.sql:/docker-entrypoint-initdb.d/2.sql
-      - ./scripts/teams.sql:/docker-entrypoint-initdb.d/3.sql
-      - ./scripts/stadiums.sql:/docker-entrypoint-initdb.d/4.sql
-      - ./scripts/competitions.sql:/docker-entrypoint-initdb.d/5.sql
-      - ./scripts/seasons.sql:/docker-entrypoint-initdb.d/6.sql
     networks:
       - loteca-network
   backend:
-    image: giancarlobastos/loteca:1.0.16
+    image: giancarlobastos/loteca:1.0.17
     restart: 'always'
     environment:
       - TOPIC=loteca
@@ -32,6 +27,17 @@ services:
       - mysql
     networks:
       - loteca-network
+  route53:
+    image: giancarlobastos/route53-dyndns:1.2.1
+    container_name: route53
+    restart: always
+    environment:
+      - AWS_ACCESS_KEY_ID=AKIA5QBALE2U4EWT4KBW
+      - AWS_SECRET_ACCESS_KEY=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
+      - AWS_CONNECTION_REGION=sa-east-1
+      - ROUTE53_DOMAIN_A_RECORD=loteca.click
+      - ROUTE53_UPDATE_FREQUENCY=10800
+      - ROUTE53_RECORD_TTL=300
   nginx-server:
     image: nginx:1.15-alpine
     ports:
@@ -43,8 +49,8 @@ services:
       - './app-ads.txt:/www/data/app-ads.txt'
       - './privacy.txt:/www/data/privacy.txt'
       - './terms.txt:/www/data/terms.txt'
-      - './data/certbot/conf:/etc/letsencrypt'
-      - './data/certbot/www:/var/www/certbot'
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
     networks: 
       - "loteca-network"
     depends_on: 
@@ -53,9 +59,9 @@ services:
     image: certbot/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     volumes:
-      - './data/certbot/conf:/etc/letsencrypt'
-      - './data/certbot/www:/var/www/certbot'
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
 volumes:
-  loteca-mysql:
+  mysql-volume:
 networks:
   loteca-network:
