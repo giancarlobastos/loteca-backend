@@ -236,36 +236,42 @@ func (as *ApiService) CreateLottery(lottery domain.Lottery) (*domain.Lottery, er
 	go func() {
 		for _, match := range *lotteryVO.Matches {
 			err = as.updateService.ImportHeadToHead(*match.HomeId, *match.AwayId)
+			time.Sleep(30 * time.Second)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportHeadToHead]: %v - [%v %v %v]", err, lottery.Number, *match.HomeId, *match.AwayId)
 			}
 
 			err = as.updateService.ImportLastMatches(*match.HomeId)
+			time.Sleep(30 * time.Second)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportLastMatches]: %v - [%v %v]", err, lottery.Number, *match.HomeId)
 			}
 
 			err = as.updateService.ImportLastMatches(*match.AwayId)
+			time.Sleep(30 * time.Second)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportLastMatches]: %v - [%v %v]", err, lottery.Number, *match.AwayId)
 			}
 
 			err = as.updateService.ImportNextMatches(*match.HomeId)
+			time.Sleep(30 * time.Second)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportNextMatches]: %v - [%v %v]", err, lottery.Number, *match.HomeId)
 			}
 
 			err = as.updateService.ImportNextMatches(*match.AwayId)
+			time.Sleep(30 * time.Second)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportNextMatches]: %v - [%v %v]", err, lottery.Number, *match.AwayId)
 			}
 
 			err = as.updateService.ImportOdds(*match.Id)
+			time.Sleep(30 * time.Second)
 
 			if err != nil {
 				log.Printf("Error [CreateLottery.ImportOdds]: %v - [%v %v]", err, lottery.Number, *match.Id)
