@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/giancarlobastos/loteca-backend/domain"
 	"github.com/giancarlobastos/loteca-backend/service"
 	"github.com/gorilla/mux"
 )
@@ -37,8 +38,9 @@ func (amw *AuthenticationMiddleware) Middleware(next http.Handler) http.Handler 
 		}
 
 		token := r.Header.Get("Token")
+		deviceId := r.Header.Get("TokenV2")
 
-		isLoginEndpoint, err := amw.isLoginEndpoint(r)
+		isLoginEndpoint, _ := amw.isLoginEndpoint(r)
 
 		if isLoginEndpoint {
 			next.ServeHTTP(w, r)
@@ -51,7 +53,13 @@ func (amw *AuthenticationMiddleware) Middleware(next http.Handler) http.Handler 
 			return
 		}
 
-		user, err := amw.apiService.Authenticate(token)
+		var user *domain.User
+
+		if deviceId != "" {
+			user, err = amw.apiService.AuthenticateV2(deviceId)
+		} else {
+			user, err = amw.apiService.Authenticate(token)
+		}
 
 		if err != nil {
 			http.Error(w, "unauthorized", http.StatusForbidden)

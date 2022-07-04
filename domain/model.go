@@ -107,6 +107,7 @@ type User struct {
 	Id         *int   `json:"id,omitempty"`
 	Name       string `json:"name,omitempty"`
 	FacebookId string `json:"facebook_id,omitempty"`
+	DeviceId   string `json:"device_id,omitempty"`
 	Email      string `json:"email,omitempty"`
 	Picture    string `json:"picture,omitempty"`
 }

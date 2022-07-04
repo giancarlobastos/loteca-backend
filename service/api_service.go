@@ -292,6 +292,23 @@ func (as *ApiService) Login(token string) (*string, error) {
 	return extendedToken, nil
 }
 
+func (as *ApiService) LoginV2(deviceId string) error {
+	user, err := as.userRepository.GetUserByDeviceId(deviceId)
+
+	if err != nil {
+		log.Printf("Error [Authenticate]: %v - [%v]", err, deviceId)
+		return err
+	}
+
+	if user == nil {
+		_, err = as.userRepository.InsertUser(&domain.User{
+			DeviceId: deviceId,
+		})
+	}
+
+	return err
+}
+
 func (as *ApiService) Authenticate(token string) (*domain.User, error) {
 	key := fmt.Sprint("user_", token)
 	user, err := as.cacheService.Get(key)
@@ -321,6 +338,29 @@ func (as *ApiService) Authenticate(token string) (*domain.User, error) {
 
 		as.cacheService.Put(key, authenticatedUser)
 		return authenticatedUser, nil
+	}
+
+	return user.(*domain.User), nil
+}
+
+func (as *ApiService) AuthenticateV2(deviceId string) (*domain.User, error) {
+	key := fmt.Sprint("user_", deviceId)
+	user, err := as.cacheService.Get(key)
+
+	if err != nil {
+		user, err := as.userRepository.GetUserByDeviceId(deviceId)
+
+		if err != nil {
+			log.Printf("Error [AuthenticateV2.GetUserByDeviceId]: %v - [%v]", err, deviceId)
+			return nil, err
+		}
+
+		if user == nil {
+			return nil, errors.New("invalid deviceId")
+		}
+
+		as.cacheService.Put(key, user)
+		return user, nil
 	}
 
 	return user.(*domain.User), nil
