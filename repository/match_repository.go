@@ -32,7 +32,8 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, r
 
 	stmt, err := mr.db.Prepare(
 		`INSERT INTO ` + "`match`" + `(id, round_id, home_id, away_id, stadium_id, start_at, home_score, away_score, ended, status, elapsed_time)
-		 VALUES(?, (SELECT r.id FROM round r WHERE r.name = ? AND r.competition_id = ? AND r.year = ?), ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		 VALUES(?, (SELECT r.id FROM round r WHERE r.name = ? AND r.competition_id = ? AND r.year = ?), 
+		 	?, ?, (SELECT COALESCE(?, (SELECT id FROM stadium WHERE name LIKE ? LIMIT 1))), ?, ?, ?, ?, ?, ?)
 		 ON DUPLICATE KEY UPDATE round_id = VALUES(round_id), start_at = VALUES(start_at), home_score = VALUES(home_score), away_score = VALUES(away_score), 
 		   stadium_id = VALUES(stadium_id), ended = COALESCE(VALUES(ended), FALSE), status = VALUES(status), elapsed_time = VALUES(elapsed_time)`)
 
@@ -62,7 +63,7 @@ func (mr *MatchRepository) InsertRoundsAndMatches(competitionId int, year int, r
 		}
 
 		for _, match := range *round.Matches {
-			_, err = stmt.Exec(match.Id, round.Name, competitionId, year, match.Home.Id, match.Away.Id, match.Stadium.Id, match.StartAt, match.HomeScore, match.AwayScore, match.Ended, match.Status, match.ElapsedTime)
+			_, err = stmt.Exec(match.Id, round.Name, competitionId, year, match.Home.Id, match.Away.Id, match.Stadium.Id, match.Stadium.Name + "%", match.StartAt, match.HomeScore, match.AwayScore, match.Ended, match.Status, match.ElapsedTime)
 
 			if err != nil {
 				log.Printf("Error [InsertRoundsAndMatches]: %v - [%v, %v, %v, %v, %v, %v, %v, %v]", err, match.Id, round.Name, match.Home.Id, match.Away.Id, match.Stadium, match.StartAt, match.HomeScore, match.AwayScore)

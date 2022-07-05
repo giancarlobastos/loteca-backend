@@ -48,7 +48,7 @@ type Team struct {
 }
 
 type Venue struct {
-	Id       int    `json:"id"`
+	Id       *int    `json:"id,omitempty"`
 	Name     string `json:"name"`
 	Address  string `json:"address"`
 	City     string `json:"city"`

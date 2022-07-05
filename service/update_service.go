@@ -322,11 +322,13 @@ func (us *UpdateService) insertCompetitionAndMatches(competitions *[]domain.Comp
 			return err
 		}
 
-		err = us.teamRepository.InsertStadium(matches[0].Stadium)
-
-		if err != nil {
-			log.Printf("Error [insertCompetitionAndMatches.InsertStadium]: %v - [%v]", err, (*matches[0].Stadium).Id)
-			return err
+		if (*matches[0].Stadium).Id != nil {
+			err = us.teamRepository.InsertStadium(matches[0].Stadium)
+	
+			if err != nil {
+				log.Printf("Error [insertCompetitionAndMatches.InsertStadium]: %v - [%v]", err, (*matches[0].Stadium).Id)
+				return err
+			}
 		}
 
 		err = us.matchRepository.InsertRoundsAndMatches(competition.Id, seasons[0].Year, seasons[0].Rounds)

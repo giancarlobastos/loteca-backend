@@ -58,7 +58,7 @@ type Group struct {
 }
 
 type Stadium struct {
-	Id      int    `json:",omitempty"`
+	Id      *int    `json:",omitempty"`
 	Name    string `json:",omitempty"`
 	City    string `json:",omitempty"`
 	State   string `json:",omitempty"`
