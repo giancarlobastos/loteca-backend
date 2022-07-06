@@ -367,3 +367,26 @@ func (as *ApiService) getOdds(matchId int) (*[]view.Odd, error) {
 
 	return &viewOdds, nil
 }
+
+func (as *ApiService) GetLotteryOdds(lotteryId int) (*[]view.Odd, error) {
+	odds, err := as.bookmakerRepository.GetAverageOdds(lotteryId)
+
+	if err != nil {
+		log.Printf("Error [getLotteryOdds]: %v - [%v]", err, lotteryId)
+		return nil, err
+	}
+
+	viewOdds := make([]view.Odd, 0)
+
+	for _, odd := range *odds {
+		id := odd.Id
+		viewOdds = append(viewOdds, view.Odd{
+			MatchId:       &id,
+			Home:          odd.Home,
+			Draw:          odd.Draw,
+			Away:          odd.Away,
+		})
+	}
+
+	return &viewOdds, nil
+}

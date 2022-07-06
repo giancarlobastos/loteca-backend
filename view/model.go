@@ -22,7 +22,7 @@ type Lottery struct {
 	Matches          *[]Match   `json:"matches,omitempty"`
 	LotteryIds       *[]int     `json:"lottery_ids,omitempty"`
 	UpdatedAt        *time.Time `json:"-"`
-	Enabled        bool `json:"-"`
+	Enabled          bool       `json:"-"`
 }
 
 type Match struct {
@@ -96,6 +96,7 @@ type TeamStats struct {
 }
 
 type Odd struct {
+	MatchId       *int    `json:"match_id,omitempty"`
 	BookmakerId   int     `json:"bookmaker_id"`
 	BookmakerName string  `json:"bookmaker_name"`
 	Home          float32 `json:"home"`
