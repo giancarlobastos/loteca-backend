@@ -1,0 +1,14 @@
+INSERT INTO loteca.lottery_poll VALUES (1007, 838144, 33, 'A', now()); -- 1
+INSERT INTO loteca.lottery_poll VALUES (1007, 838786, 33, 'H', now()); -- 2
+INSERT INTO loteca.lottery_poll VALUES (1007, 838143, 33, 'H', now()); -- 3
+INSERT INTO loteca.lottery_poll VALUES (1007, 838787, 33, 'D', now()); -- 4
+INSERT INTO loteca.lottery_poll VALUES (1007, 838791, 33, 'H', now()); -- 5
+INSERT INTO loteca.lottery_poll VALUES (1007, 838142, 33, 'H', now()); -- 6
+INSERT INTO loteca.lottery_poll VALUES (1007, 838148, 33, 'A', now()); -- 7
+INSERT INTO loteca.lottery_poll VALUES (1007, 838150, 33, 'H', now()); -- 8
+INSERT INTO loteca.lottery_poll VALUES (1007, 840759, 33, 'H', now()); -- 9
+INSERT INTO loteca.lottery_poll VALUES (1007, 838141, 33, 'H', now()); -- 10
+INSERT INTO loteca.lottery_poll VALUES (1007, 838147, 33, 'A', now()); -- 11
+INSERT INTO loteca.lottery_poll VALUES (1007, 838145, 33, 'H', now()); -- 12
+INSERT INTO loteca.lottery_poll VALUES (1007, 840762, 33, 'D', now()); -- 13
+INSERT INTO loteca.lottery_poll VALUES (1007, 838149, 33, 'D', now()); -- 14

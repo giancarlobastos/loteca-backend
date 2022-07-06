@@ -71,3 +71,24 @@ https://loteca.click/manager/Germany/competitions/81/2021/matches
 #### serie A - italy
 https://loteca.click/manager/Italy/competitions/135/2021/matches
 
+
+
+
+
+
+
+```
+select count(*)
+FROM (SELECT h.name home, a.name away, lp.result vote, 
+	case when m.home_score > m.away_score then 'H'
+	when m.home_score = m.away_score then 'D'
+	else 'A' end result
+ FROM lottery_poll lp
+ JOIN lottery_match lm ON lp.match_id = lm.match_id
+ JOIN loteca.match m ON m.id = lp.match_id
+ JOIN team h on m.home_id = h.id
+ JOIN team a on m.away_id = a.id
+ WHERE lp.lottery_id = 1006 AND lp.user_id = 13
+ ORDER BY lm.order) c
+ WHERE vote = result
+```
