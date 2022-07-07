@@ -346,72 +346,88 @@ func (as *ApiService) getFacebookUser(token string) (*domain.User, error) {
 }
 
 func (as *ApiService) getOdds(matchId int) (*[]view.Odd, error) {
-	odds, err := as.bookmakerRepository.GetOdds(matchId)
+	key := fmt.Sprint("odds_", matchId)
+	cachedOdds, err := as.cacheService.Get(key)
 
 	if err != nil {
-		log.Printf("Error [getOdds]: %v - [%v]", err, matchId)
-		return nil, err
+		odds, err := as.bookmakerRepository.GetOdds(matchId)
+
+		if err != nil {
+			log.Printf("Error [getOdds]: %v - [%v]", err, matchId)
+			return nil, err
+		}
+	
+		viewOdds := make([]view.Odd, 0)
+	
+		for _, odd := range *odds {
+			viewOdds = append(viewOdds, view.Odd{
+				BookmakerId:   odd.Bookmaker.Id,
+				BookmakerName: odd.Bookmaker.Name,
+				Home:          odd.Home,
+				Draw:          odd.Draw,
+				Away:          odd.Away,
+			})
+		}
+	
+		as.cacheService.Put(key, &viewOdds)
+		return &viewOdds, nil	
 	}
 
-	viewOdds := make([]view.Odd, 0)
-
-	for _, odd := range *odds {
-		viewOdds = append(viewOdds, view.Odd{
-			BookmakerId:   odd.Bookmaker.Id,
-			BookmakerName: odd.Bookmaker.Name,
-			Home:          odd.Home,
-			Draw:          odd.Draw,
-			Away:          odd.Away,
-		})
-	}
-
-	return &viewOdds, nil
+	return cachedOdds.(*[]view.Odd), nil
 }
 
 func (as *ApiService) GetLotteryOdds(lotteryId int) (*[]view.Odd, error) {
-	lottery, err := as.lotteryRepository.GetLottery(lotteryId)
+	key := fmt.Sprint("lottery_odds_", lotteryId)
+	cachedOdds, err := as.cacheService.Get(key)
 
 	if err != nil {
-		log.Printf("Error [GetLotteryOdds.GetLottery]: %v - [%v]", err, lotteryId)
-		return nil, err
-	}
+		lottery, err := as.lotteryRepository.GetLottery(lotteryId)
 
-	if lottery.Id == nil {
-		r := make([]view.Odd, 14)
-		return &r, nil
-	}
-
-	odds, err := as.bookmakerRepository.GetAverageOdds(lotteryId)
-
-	if err != nil {
-		log.Printf("Error [GetLotteryOdds.GetAverageOdds]: %v - [%v]", err, lotteryId)
-		return nil, err
-	}
-
-	viewOdds := make([]view.Odd, 0)
-	oddIndex := 0
-
-	for _, match := range *lottery.Matches {
-		if oddIndex < len(*odds) {
-			if odd := (*odds)[oddIndex]; odd.Id == *match.Id {
-				viewOdds = append(viewOdds, view.Odd{
-					MatchId: match.Id,
-					Home:    odd.Home,
-					Draw:    odd.Draw,
-					Away:    odd.Away,
-				})
-				oddIndex++
+		if err != nil {
+			log.Printf("Error [GetLotteryOdds.GetLottery]: %v - [%v]", err, lotteryId)
+			return nil, err
+		}
+	
+		if lottery.Id == nil {
+			r := make([]view.Odd, 14)
+			return &r, nil
+		}
+	
+		odds, err := as.bookmakerRepository.GetAverageOdds(lotteryId)
+	
+		if err != nil {
+			log.Printf("Error [GetLotteryOdds.GetAverageOdds]: %v - [%v]", err, lotteryId)
+			return nil, err
+		}
+	
+		viewOdds := make([]view.Odd, 0)
+		oddIndex := 0
+	
+		for _, match := range *lottery.Matches {
+			if oddIndex < len(*odds) {
+				if odd := (*odds)[oddIndex]; odd.Id == *match.Id {
+					viewOdds = append(viewOdds, view.Odd{
+						MatchId: match.Id,
+						Home:    odd.Home,
+						Draw:    odd.Draw,
+						Away:    odd.Away,
+					})
+					oddIndex++
+				} else {
+					viewOdds = append(viewOdds, view.Odd{
+						MatchId: match.Id,					
+					})
+				}
 			} else {
 				viewOdds = append(viewOdds, view.Odd{
-					MatchId: match.Id,					
+					MatchId: match.Id,
 				})
 			}
-		} else {
-			viewOdds = append(viewOdds, view.Odd{
-				MatchId: match.Id,
-			})
 		}
+	
+		as.cacheService.Put(key, &viewOdds)
+		return &viewOdds, nil
 	}
 
-	return &viewOdds, nil
+	return cachedOdds.(*[]view.Odd), nil
 }
