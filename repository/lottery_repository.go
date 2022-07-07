@@ -41,7 +41,7 @@ func (lr *LotteryRepository) GetLotteryUpdates() (*[]view.Lottery, error) {
 		`SELECT id, name, number, estimated_prize, main_prize, main_prize_winners, side_prize, 
 			side_prize_winners, special_prize, accumulated, end_at, result_at, updated_at, enabled
 	     FROM lottery 
-		 WHERE updated_at BETWEEN DATE_SUB(NOW(), INTERVAL 1 DAY) AND NOW()`
+		 WHERE updated_at BETWEEN DATE_SUB(NOW(), INTERVAL 15 DAY) AND NOW()`
 
 	stmt, err := lr.db.Prepare(query)
 
