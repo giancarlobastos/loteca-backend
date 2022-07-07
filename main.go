@@ -39,6 +39,10 @@ func main() {
 
 func init() {
 	topic := os.Getenv("TOPIC")
+	scoreDaemonEnabled := os.Getenv("SCORE_DAEMON_ENABLED") == "true"
+	lotteryDaemonEnabled := os.Getenv("LOTTERY_DAEMON_ENABLED") == "true"
+	bookmakerDaemonEnabled := os.Getenv("BOOKMAKER_DAEMON_ENABLED") == "true"
+
 	database = getDatabaseConnection()
 
 	teamRepository := repository.NewTeamRepository(database)
@@ -64,9 +68,17 @@ func init() {
 	lottteryDaemon := daemon.NewLotteryDaemon(cacheService, lotteryRepository, notificationService)
 	bookmakerDaemon := daemon.NewBookmakerDaemon(updateService, lotteryRepository)
 
-	go liveScoreDaemon.CheckLiveScores()
-	go lottteryDaemon.CheckUpdates()
-	go bookmakerDaemon.UpdateOdds()
+	if scoreDaemonEnabled {
+		go liveScoreDaemon.CheckLiveScores()
+	}
+
+	if lotteryDaemonEnabled {
+		go lottteryDaemon.CheckUpdates()
+	}
+
+	if bookmakerDaemonEnabled {
+		go bookmakerDaemon.UpdateOdds()
+	}
 
 	router = api.NewRouter(apiService, updateService, notificationService)
 }

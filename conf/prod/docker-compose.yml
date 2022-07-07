@@ -22,6 +22,9 @@ services:
     restart: 'always'
     environment:
       - TOPIC=loteca
+      - SCORE_DAEMON_ENABLED=true
+      - LOTTERY_DAEMON_ENABLED=true
+      - BOOKMAKER_DAEMON_ENABLED=true
     ports:
       - '9000:9000'
       - '9001:9001'

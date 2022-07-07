@@ -97,8 +97,8 @@ type TeamStats struct {
 
 type Odd struct {
 	MatchId       *int    `json:"match_id,omitempty"`
-	BookmakerId   int     `json:"bookmaker_id"`
-	BookmakerName string  `json:"bookmaker_name"`
+	BookmakerId   int     `json:"bookmaker_id,omitempty"`
+	BookmakerName string  `json:"bookmaker_name,omitempty"`
 	Home          float32 `json:"home"`
 	Draw          float32 `json:"draw"`
 	Away          float32 `json:"away"`

@@ -369,23 +369,48 @@ func (as *ApiService) getOdds(matchId int) (*[]view.Odd, error) {
 }
 
 func (as *ApiService) GetLotteryOdds(lotteryId int) (*[]view.Odd, error) {
+	lottery, err := as.lotteryRepository.GetLottery(lotteryId)
+
+	if err != nil {
+		log.Printf("Error [GetLotteryOdds.GetLottery]: %v - [%v]", err, lotteryId)
+		return nil, err
+	}
+
+	if lottery.Id == nil {
+		r := make([]view.Odd, 14)
+		return &r, nil
+	}
+
 	odds, err := as.bookmakerRepository.GetAverageOdds(lotteryId)
 
 	if err != nil {
-		log.Printf("Error [getLotteryOdds]: %v - [%v]", err, lotteryId)
+		log.Printf("Error [GetLotteryOdds.GetAverageOdds]: %v - [%v]", err, lotteryId)
 		return nil, err
 	}
 
 	viewOdds := make([]view.Odd, 0)
+	oddIndex := 0
 
-	for _, odd := range *odds {
-		id := odd.Id
-		viewOdds = append(viewOdds, view.Odd{
-			MatchId:       &id,
-			Home:          odd.Home,
-			Draw:          odd.Draw,
-			Away:          odd.Away,
-		})
+	for _, match := range *lottery.Matches {
+		if oddIndex < len(*odds) {
+			if odd := (*odds)[oddIndex]; odd.Id == *match.Id {
+				viewOdds = append(viewOdds, view.Odd{
+					MatchId: match.Id,
+					Home:    odd.Home,
+					Draw:    odd.Draw,
+					Away:    odd.Away,
+				})
+				oddIndex++
+			} else {
+				viewOdds = append(viewOdds, view.Odd{
+					MatchId: match.Id,					
+				})
+			}
+		} else {
+			viewOdds = append(viewOdds, view.Odd{
+				MatchId: match.Id,
+			})
+		}
 	}
 
 	return &viewOdds, nil
