@@ -3,5 +3,5 @@ FROM lottery_match lm
 JOIN loteca.match m on m.id = lm.match_id 
 JOIN team h on m.home_id = h.id
 JOIN team a on m.away_id = a.id
-WHERE lm.lottery_id = 1007
+WHERE lm.lottery_id = 1008
 ORDER BY lm.order;

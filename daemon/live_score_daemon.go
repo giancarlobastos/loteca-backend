@@ -130,6 +130,6 @@ func (lsd *LiveScoreDaemon) notifyUpdates(lotteryId int, oldMatch *view.Match, n
 
 func catchErrors() {
 	if err := recover(); err != nil {
-		log.Printf("[LiveScoreDaemon] panic occurred: %v", err)
+		log.Printf("[daemon error] %v", err)
 	}
 }

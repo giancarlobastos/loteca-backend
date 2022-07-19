@@ -63,7 +63,7 @@ func (lr *LotteryRepository) GetLotteryUpdates() (*[]view.Lottery, error) {
 
 	lotteries := make([]view.Lottery, 0)
 
-	if rows.Next() {
+	for rows.Next() {
 		lottery := view.Lottery{}
 		err = rows.Scan(&lottery.Id, &lottery.Name, &lottery.Number, &lottery.EstimatedPrize, &lottery.MainPrize, &lottery.MainPrizeWinners,
 			&lottery.SidePrize, &lottery.SidePrizeWinners, &lottery.SpecialPrize, &lottery.Accumulated, &lottery.EndAt, &lottery.ResultAt, &lottery.UpdatedAt, &lottery.Enabled)

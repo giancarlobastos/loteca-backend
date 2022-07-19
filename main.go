@@ -42,6 +42,8 @@ func init() {
 	scoreDaemonEnabled := os.Getenv("SCORE_DAEMON_ENABLED") == "true"
 	lotteryDaemonEnabled := os.Getenv("LOTTERY_DAEMON_ENABLED") == "true"
 	bookmakerDaemonEnabled := os.Getenv("BOOKMAKER_DAEMON_ENABLED") == "true"
+	matchDaemonEnabled := os.Getenv("MATCH_DAEMON_ENABLED") == "true"
+	h2hDaemonEnabled := os.Getenv("H2H_DAEMON_ENABLED") == "true"
 
 	database = getDatabaseConnection()
 
@@ -67,6 +69,8 @@ func init() {
 	liveScoreDaemon := daemon.NewLiveScoreDaemon(apiClient, updateService, cacheService, lotteryRepository, notificationService)
 	lottteryDaemon := daemon.NewLotteryDaemon(cacheService, lotteryRepository, notificationService)
 	bookmakerDaemon := daemon.NewBookmakerDaemon(updateService, lotteryRepository)
+	matchDaemon := daemon.NewMatchDaemon(apiClient, updateService, lotteryRepository)
+	h2hDaemon := daemon.NewH2HDaemon(apiClient, updateService, lotteryRepository)
 
 	if scoreDaemonEnabled {
 		go liveScoreDaemon.CheckLiveScores()
@@ -78,6 +82,14 @@ func init() {
 
 	if bookmakerDaemonEnabled {
 		go bookmakerDaemon.UpdateOdds()
+	}
+
+	if matchDaemonEnabled {
+		go matchDaemon.CheckMatches()
+	}
+
+	if h2hDaemonEnabled {
+		go h2hDaemon.CheckMatches()
 	}
 
 	router = api.NewRouter(apiService, updateService, notificationService)

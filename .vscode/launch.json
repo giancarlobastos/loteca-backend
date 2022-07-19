@@ -9,7 +9,11 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "main.go"
+            "program": "main.go",
+            "env": {
+                "TOPIC": "loteca_test",
+                "LOTTERY_DAEMON_ENABLED": "true",
+            }
         }
     ]
 }

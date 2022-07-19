@@ -17,7 +17,7 @@ services:
     networks:
       - loteca-network
   backend:
-    image: giancarlobastos/loteca:1.0.17
+    image: giancarlobastos/loteca:1.0.26
     container_name: backend
     restart: 'always'
     environment:
@@ -25,6 +25,8 @@ services:
       - SCORE_DAEMON_ENABLED=true
       - LOTTERY_DAEMON_ENABLED=true
       - BOOKMAKER_DAEMON_ENABLED=true
+      - MATCH_DAEMON_ENABLED=true
+      - H2H_DAEMON_ENABLED=true
     ports:
       - '9000:9000'
       - '9001:9001'
