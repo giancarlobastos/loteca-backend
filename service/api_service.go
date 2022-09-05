@@ -313,10 +313,15 @@ func (as *ApiService) Authenticate(token string) (*domain.User, error) {
 		if authenticatedUser == nil {
 			authenticatedUser, err = as.userRepository.InsertUser(facebookUser)
 		}
-
+		
 		if err != nil {
 			log.Printf("Error [Authenticate.InsertUser]: %v - [%v]", err, facebookUser.FacebookId)
 			return nil, err
+		}
+		
+		if authenticatedUser.Blocked {
+			log.Printf("User blocked: %v", authenticatedUser)
+			return nil, errors.New("user blocked")
 		}
 
 		as.cacheService.Put(key, authenticatedUser)

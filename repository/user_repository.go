@@ -49,14 +49,14 @@ func (ur *UserRepository) InsertUser(user *domain.User) (*domain.User, error) {
 
 func (ur *UserRepository) GetUser(id int) (*domain.User, error) {
 	return ur.getUser(
-		`SELECT id, name, facebook_id, photo, email
+		`SELECT id, name, facebook_id, photo, email, blocked
 		 FROM user
 		 WHERE id = ?`, &id)
 }
 
 func (ur *UserRepository) GetUserByFacebookId(facebookId string) (*domain.User, error) {
 	return ur.getUser(
-		`SELECT id, name, facebook_id, photo, email
+		`SELECT id, name, facebook_id, photo, email, blocked
 		 FROM user
 		 WHERE facebook_id = ?`, &facebookId)
 }
@@ -82,7 +82,7 @@ func (ur *UserRepository) getUser(query string, args ...interface{}) (*domain.Us
 
 	if rows.Next() {
 		user := domain.User{}
-		err = rows.Scan(&user.Id, &user.Name, &user.FacebookId, &user.Picture, &user.Email)
+		err = rows.Scan(&user.Id, &user.Name, &user.FacebookId, &user.Picture, &user.Email, &user.Blocked)
 
 		if err != nil {
 			log.Printf("Error [GetUser]: %v - [%v]", err, args)

@@ -100,7 +100,8 @@ CREATE TABLE `user` (
   `name` varchar(255),
   `facebook_id` varchar(255),
   `photo` varchar(2000),
-  `email` varchar(255)
+  `email` varchar(255),
+  `blocked` boolean NOT NULL DEFAULT FALSE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `lottery_poll` (

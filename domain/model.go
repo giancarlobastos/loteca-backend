@@ -109,6 +109,7 @@ type User struct {
 	FacebookId string `json:"facebook_id,omitempty"`
 	Email      string `json:"email,omitempty"`
 	Picture    string `json:"picture,omitempty"`
+	Blocked    bool   `json:",omitempty"`
 }
 
 type Poll struct {
